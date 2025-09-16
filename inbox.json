@@ -1,0 +1,1587 @@
+{
+  "name": "riam1",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=A new email has just been received. \n\nHere's the email subject:{{ $item(\"0\").$node[\"Loop Over Items\"].json[\"cleaned_subject\"] }}\nemail body:\n{{ $('Fix Email Format').item.json.output.newProspectEmail }}\n\nHere's the summary of the email thread: \n\n{{ $('Fix Email Format').item.json.output.previousEmails ||\"no previous summary of email thread\"}}\n\nWe checked the email address in our CRM. Here's all the notes we found on the account associated with the email address: \n\n{{ $('pass note and name').item.json.notes ||\"no notes \" }}\n\nCategorise according to instructions. \n\n\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an AI assistant working at **nesroi**, an AI Automation Agency. Your role is to **read the entire email thread** and accurately **categorize each inbound email** into one of three categories: `Sales`, `Customer Service`, or `Other`.\n\n## 🔍 **Analysis Framework - Apply Before Classifying:**\n\nBefore making your classification decision, systematically analyze:\n\n### 1. **EMAIL DIRECTION & INTENT:**\n- Is this TO nesroi (someone contacting us) or FROM another company TO us (promotional outreach)?\n- Does the sender want something FROM nesroi or are they offering something TO nesroi?\n\n### 2. **SENDER STATUS & TONE:**\n- Does the tone suggest they're inquiring about OUR services?\n- Are they promoting THEIR own products/services?\n- Are they an existing customer with a support need?\n\n### 3. **CALL-TO-ACTION ANALYSIS:**\n- Are they asking us to buy/consider/try something? → Likely `Other`\n- Are they asking about our services/pricing/capabilities? → Likely `Sales`\n- Are they reporting issues with services we provided? → Likely `Customer Service`\n\n### 4. **LANGUAGE PATTERN RECOGNITION:**\n**Promotional Indicators (→ Other):**\n- \"We offer...\", \"Our services include...\", \"Special discount...\", \"Try our product...\", \"Limited time offer...\"\n- Company signatures with sales contact info\n- Unsubscribe links or marketing language\n\n**Sales Inquiry Indicators (→ Sales):**\n- \"Do you provide...\", \"I need...\", \"Can you help with...\", \"What are your rates...\", \"I'm looking for...\"\n- Questions about capabilities, pricing, or availability\n- Request for demos, calls, or quotes\n\n**Customer Service Indicators (→ Customer Service):**\n- \"I'm having trouble with...\", \"There's an issue...\", \"Not working properly...\", \"Need help accessing...\"\n- References to existing projects, accounts, or previous work\n- Problem/complaint language from known clients\n\n---\n\n## 📋 **Classification Categories:**\n\n### 1. `Sales`\n* **Inbound inquiries TO nesroi** about **our services** that represent potential revenue opportunities.\n* Includes prospects or leads asking about:\n  * Our pricing, services, or capabilities\n  * Bulk orders or custom solutions  \n  * Partnership opportunities with nesroi\n  * Booking a demo/call with our team\n  * Requesting a quote for our services\n* May come from potential clients or existing clients interested in expanding their engagement with nesroi.\n\n### 2. `Customer Service`\n* **Support requests from existing nesroi customers** about services we've already provided or are currently providing.\n* Includes:\n  * Issues with ongoing projects or deliverables\n  * Complaints about our services\n  * Requests for changes, refunds, or project modifications\n  * Account or billing issues related to nesroi services\n  * Technical problems with solutions we've implemented\n  * Questions about how to use our delivered solutions\n\n### 3. `Other`\n* All emails **not directly related** to Sales or Customer Service for nesroi.\n* Includes:\n  * **Promotional emails FROM other companies TO us** (vendors, suppliers, marketing outreach)\n  * Internal communications between team members\n  * Financial matters not related to customer billing (invoices we receive, salary, taxation)\n  * Spam or irrelevant messages\n  * Simple \"Thank you\" emails that **don't require a reply or action**\n  * General business correspondence that doesn't involve selling or supporting our services\n  * Job applications or recruitment-related emails\n\n---\n\n## ⚡ **Quick Classification Logic:**\n\n1. **Check Email Direction & Intent:**\n   - If sender is promoting THEIR products/services TO nesroi → `Other`\n   - If sender is inquiring about nesroi's services → `Sales`  \n   - If existing customer needs support for services we provided → `Customer Service`\n\n2. **Key Decision Indicators:**\n   - Promotional language (\"We offer\", \"Try our\") + company signature = `Other`\n   - Question/inquiry language (\"Do you\", \"Can you\", \"I need\") = likely `Sales`\n   - Problem/issue language from known customers = `Customer Service`\n\n3. **When in Doubt:**\n   - Ask: \"Does this email require action from our Sales or Customer Service teams regarding nesroi's services?\"\n   - If No → `Other`\n   - If Yes → Determine if it's new business (`Sales`) or existing customer support (`Customer Service`)\n\n---\n\n## 📝 **Final Instructions:**\n* Always review the **entire email thread**, not just the last message\n* Apply the analysis framework systematically before deciding\n* Use your judgment based on **intent** and **context**, not just keywords\n* Focus on nesroi's role as the service provider being contacted vs. recipient of others' outreach\n\n---\n\n### 🔚 **Output Format:**\nOnly return one of the following three exact strings:\n* `Sales`\n* `Customer Service` \n* `Other`\n\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -752,
+        512
+      ],
+      "id": "3ad9e811-4141-48f5-9889-891aefaa03b6",
+      "name": "Categorisation"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=incoming email subject:{{ $('Get many messages').item.json.subject }}\nemail body:{{ $('Fix Email Format').item.json.output.newProspectEmail }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an email-triage assistant. Your job is to read an incoming email (subject and body) and decide whether it is important/urgent or not.   Criteria for “important” include, but are not limited to: - Requests or questions from executives, VIP clients, stakeholders, or regulators   - Deadline-driven tasks, legal matters, compliance issues, billing or payment problems   - System outages, security incidents, or anything impacting operations or reputation   - Explicit markers like “urgent,” “ASAP,” “immediately,” or “time-sensitive”   - Issues requiring coordination across teams or elevated visibility   - Any email from a current, past, future or potential customer   Otherwise, it's 'Not'.  Promotional emails or other companies selling us a service via email is Not important.   Your output must follow the defined schema.   Do not output anything else—no explanations, no extra text.   "
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -480,
+        1520
+      ],
+      "id": "d4559c57-1103-47e9-b824-8bc428f859a9",
+      "name": "Importance Scoring"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\",\n      \"description\": \"'Sales', 'Customer Service' or 'Other'.\"\n    }\n  },\n  \"required\": [\n    \"category\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -560,
+        704
+      ],
+      "id": "c4c23717-dba8-4741-82a0-ed7852bceccd",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -5600,
+        544
+      ],
+      "id": "93eb75b8-cae0-46cb-ab50-e7c4b93e24e3",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"label\": {\n      \"type\": \"string\",\n      \"description\": \"'Important' for important/urgent emails. 'Not' for all other emails.\"\n    }\n  },\n  \"required\": [\n    \"label\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -112,
+        2176
+      ],
+      "id": "36a957aa-280f-4684-adcf-fccc7fbfbd8e",
+      "name": "Structured Output Parser2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "77968881-2fcf-415a-944d-0968a36a7834",
+              "leftValue": "={{ $json.From }}",
+              "rightValue": "neswave@gmail.com",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -5872,
+        544
+      ],
+      "id": "0481b786-6071-4133-b1bb-35c117a811ee",
+      "name": "Filter Inbound"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "7e33598c-17cb-497a-88f5-9cd3583211f7",
+              "name": "emailAddress",
+              "value": "={{ $item(\"0\").$node[\"Loop Over Items\"].json[\"from_emails\"][\"0\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "3ee95587-c503-42bf-8625-ce60b28569d7",
+              "name": "threadIdToMatch",
+              "value": "={{ $item(\"0\").$node[\"Loop Over Items\"].json[\"threadId\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -5248,
+        592
+      ],
+      "id": "6ecc3ecd-3a37-4c5b-af89-63c158eb88b3",
+      "name": "Extract Email Address"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        -5552,
+        752
+      ],
+      "id": "d2ad9ef0-0640-4eb4-bf21-82148396f2bc",
+      "name": "Done"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0cccd33-bbc0-4bce-84fc-e34ec66d29d1",
+              "leftValue": "={{ $('HubSpot_CRM').item.json.id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -3872,
+        480
+      ],
+      "id": "3492290a-e3d8-4d80-925c-90259ea3ef27",
+      "name": "new?"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"newProspectEmail\": {\n      \"type\": \"string\",\n      \"description\": \"The body content of the new email received by the prospect which we need to answer.\"\n    },\n      \"previousEmails\": {\n      \"type\": \"string\",\n      \"description\": \"Summary of previous emails in the same thread in dotpoint format. If only one email then leave this empty.\"\n    }\n  },\n  \"required\": [\n    \"newProspectEmail\",\n    \"previousEmails\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -2656,
+        608
+      ],
+      "id": "de50a960-a82b-4664-8642-22d1e507c20d",
+      "name": "Structured Output Parser6"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=here is the full email thread: \n{{ $('Text Only').item.json.text }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You work in the customer support team at Neswave. You are managing incoming emails to your shared support inbox.  \n\nThe emails are given to you with full thread(if have) or only the incoming email .   \n\nYour job is to reformat them into an easier readable format by following below steps.   \n\nYou must:   \n\n1. Identify the newest email which was just recived and extract this email.   \nThis email will be have just been received just now (exact time now = {{ $now }}). Each email has the previous email at the end of it so you must determine when it is referencing a previous email and remove that so the final output is just the new email body. Put this in the newPorspectEmail parameter of your output. This email will always be from the Customer.\n\n2. Summarise the previous emails in the thread in dotpoint format so your manager can quickly read over it for context. Put this in the previousEmails parameter.   \nSometimes the email won't have previous emails. In this case just leave the previousEmails parameter empty.\n\nKeep in mind the thread goes from oldest email at top to newest email at the bottom. \n\nYour output must follow the schema defined."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -2800,
+        448
+      ],
+      "id": "0cba0b72-6dc0-458e-b2b3-344341d44ec5",
+      "name": "Fix Email Format"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * n8n - Function node\n * Extracts notes from HubSpot engagements API response and converts to Markdown string.\n * Handles the actual API response structure from HubSpot engagements endpoint.\n */\n\nreturn items.map(item => {\n  // HubSpot engagements API returns data in 'results' array\n  const engagements = item.json?.results || [];\n  \n  // Filter for NOTE type engagements and extract note data\n  const notes = engagements\n    .filter(engagement => engagement.engagement?.type === 'NOTE')\n    .map(engagement => ({\n      dateAdded: new Date(engagement.engagement?.createdAt || engagement.engagement?.lastUpdated).toISOString(),\n      body: engagement.associations?.associatedVids ? \n        engagement.metadata?.body || engagement.engagement?.bodyPreview || 'No content' :\n        engagement.metadata?.body || engagement.engagement?.bodyPreview || 'No content'\n    }))\n    .sort((a, b) => new Date(b.dateAdded) - new Date(a.dateAdded)); // Sort by newest first\n\n  // Build the combined note string\n  const combinedNotes = notes.length > 0 ? \n    notes\n      .map((note, idx) => \n        `Note#${idx + 1}:\\n${note.dateAdded}\\n${note.body || 'No content'}`)\n      .join('\\n\\n') : \n    'No notes found';\n\n  // Output item with notes field\n  return {\n    json: {\n      notes: combinedNotes,\n      noteCount: notes.length,\n      contactId: item.json?.contactId || 'Unknown'\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3248,
+        336
+      ],
+      "id": "61ffb402-dadd-4aad-abd4-17f4fbe5151c",
+      "name": "Format Notes into Markdown"
+    },
+    {
+      "parameters": {
+        "authentication": "appToken",
+        "operation": "search",
+        "returnAll": true,
+        "filterGroupsUi": {
+          "filterGroupsValues": [
+            {
+              "filtersUi": {
+                "filterValues": [
+                  {
+                    "propertyName": "email|string",
+                    "value": "={{ $('Extract Email Address').item.json.emailAddress }}"
+                  }
+                ]
+              }
+            }
+          ]
+        },
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.1,
+      "position": [
+        -4176,
+        480
+      ],
+      "id": "05a90245-a22e-467b-89a0-87be66698d25",
+      "name": "HubSpot_CRM",
+      "alwaysOutputData": true,
+      "credentials": {
+        "hubspotAppToken": {
+          "id": "AGQ4JXuaDCW1IN1Q",
+          "name": "HubSpot account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "=https://api.hubapi.com/engagements/v1/engagements/associated/contact/{{ $json.id }}/paged",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer your-hubspot-api"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -3552,
+        336
+      ],
+      "id": "e9970c69-b350-437f-8b3e-b79c85ed2675",
+      "name": "take note from CRM"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.1,
+      "position": [
+        -4368,
+        480
+      ],
+      "id": "ee465946-259b-41b7-a03c-8edf30f7a74f",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5fa8682a-b96b-4927-8f02-0b478f4ce166",
+              "name": "notes",
+              "value": "={{ $json.notes }}",
+              "type": "string"
+            },
+            {
+              "id": "5fc78e8e-9fef-400b-8248-303e2e081f65",
+              "name": "name",
+              "value": "={{ $('HubSpot_CRM').item.json.properties.firstname ||\"null\" }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -3008,
+        448
+      ],
+      "id": "57799802-98c5-4530-9097-4d17e225ecf1",
+      "name": "pass note and name"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "get",
+        "threadId": "={{ $item(\"0\").$node[\"Loop Over Items\"].json[\"threadId\"] }}",
+        "simple": false,
+        "options": {
+          "returnOnlyMessages": true
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -5504,
+        256
+      ],
+      "id": "a3aa917e-297a-4bee-a3d5-b678cc4c4083",
+      "name": "Get Full Thread",
+      "webhookId": "2929c400-1468-4c14-9d87-19e351d372c1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5BRLvA6jN2jDre12",
+          "name": "Gmail account"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * n8n Function node – Group e‑mails by thread + add dateTime\n */\n\nconst REP_ADDRESSES = [\n  'muhammadriam00268@gmail.com',\n  'ahmedriam00268@gmail.com'  // Added this email\n].map(a => a.toLowerCase());\n\n/* ---------- helpers ---------- */\nfunction decodeBody(payload) {\n  if (payload?.body?.data) return b64(payload.body.data);\n\n  if (Array.isArray(payload?.parts)) {\n    const part =\n      payload.parts.find(p => p.mimeType === 'text/plain' && p.body?.data) ??\n      payload.parts.find(p => p.mimeType === 'text/html'  && p.body?.data);\n    if (part) return b64(part.body.data);\n  }\n  return '';\n}\n\nfunction b64(str) {\n  const normalised = str.replace(/-/g, '+').replace(/_/g, '/');\n  return Buffer.from(normalised, 'base64').toString('utf8');\n}\n\nfunction whoIsSender(fromHeader) {\n  const match = fromHeader.match(/<([^>]+)>/);\n  const email = (match ? match[1] : fromHeader).trim().toLowerCase();\n  return REP_ADDRESSES.includes(email) ? 'rep' : 'customer';\n}\n\n/** Convert Gmail internalDate (ms since epoch) ➜ ISO‑8601 in Australia/Sydney */\nfunction formatDateTime(internalDate) {\n  const date = new Date(Number(internalDate));\n  return new Intl.DateTimeFormat('en-AU', {\n    timeZone: 'Australia/Sydney',\n    year:   'numeric',\n    month:  '2-digit',\n    day:    '2-digit',\n    hour:   '2-digit',\n    minute: '2-digit',\n    second: '2-digit',\n    hour12: false,\n  }).format(date)\n    .replace(',', '')\n    .replace(/(\\d{2})\\/(\\d{2})\\/(\\d{4})/, '$3-$2-$1')\n    .replace(' ', 'T') + '+10:00';\n}\n\n/* ---------- main ---------- */\nconst rawItems = $input.all();\nconst threads = new Map();\nconst orderedThreads = [];\n\nfor (const { json } of rawItems) {\n  const threadId = json.threadId;\n  if (!threads.has(threadId)) {\n    const newThread = { threadId, emails: [] };\n    threads.set(threadId, newThread);\n    orderedThreads.push(newThread);\n  }\n\n  const emailObj = {\n    dateTime: formatDateTime(json.internalDate),\n    from:     whoIsSender(json.From ?? json.from ?? ''),\n    message:  decodeBody(json.payload),\n  };\n\n  threads.get(threadId).emails.push(emailObj);\n}\n\nreturn orderedThreads.map(t => ({ json: t }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5280,
+        256
+      ],
+      "id": "ba18c2cd-1448-42b6-825a-205d15f046e8",
+      "name": "Reformat Thread"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Get the full input data from n8n\ninput_data = items[0]['json']\n\ndef format_email_thread_to_dialogue(emails_data):\n    \"\"\"\n    Convert email thread format to dialogue format\n    \"\"\"\n    import re\n    \n    dialogue_parts = []\n    \n    # Process each email in the thread\n    for email in emails_data.get('emails', []):\n        sender_type = email.get('from', '').lower()\n        message_content = email.get('message', '')\n        \n        # Determine sender label\n        if sender_type == 'rep':\n            sender_label = 'email from Neswave customer support team'\n        else:\n            sender_label = 'email from Customer'\n        \n        # Extract the actual message content (before any quoted text)\n        actual_message = extract_actual_message(message_content)\n        \n        if actual_message.strip():\n            dialogue_parts.append({\n                \"sender\": sender_label,\n                \"message\": actual_message.strip()\n            })\n    \n    # Format as dialogue string\n    formatted_dialogue = \"\"\n    for entry in dialogue_parts:\n        formatted_dialogue += f\"{entry['sender']}: {entry['message']}\\n\"\n    \n    return formatted_dialogue.strip()\n\ndef extract_actual_message(message_text):\n    \"\"\"\n    Extract the actual message content, removing quoted text and email headers\n    \"\"\"\n    import re\n    \n    lines = message_text.split('\\n')\n    actual_content = []\n    \n    for line in lines:\n        line = line.strip()\n        \n        # Stop when we hit email headers or quoted content\n        if (line.startswith('On ') and ('wrote:' in line or re.search(r'\\d{4}', line))) or \\\n           line.startswith('>') or \\\n           re.search(r'<[^>]+@[^>]+>', line) or \\\n           line == 'wrote:':\n            break\n            \n        # Skip empty lines and carriage returns\n        if line and line != '\\r':\n            actual_content.append(line)\n    \n    return ' '.join(actual_content)\n\n# Process the input and format it\nformatted_output = format_email_thread_to_dialogue(input_data)\n\n# Return the result for n8n\nreturn [{'json': {**items[0]['json'], 'formatted_dialogue': formatted_output}}]"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -5088,
+        288
+      ],
+      "id": "8f22c67a-701b-4cef-9a2f-73160a61e424",
+      "name": "organize conversations"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-001",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -4832,
+        448
+      ],
+      "id": "1cf02bb3-f5c0-4c4f-bf49-3f8b55668e9e",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=here is the dialogue:{{ $json.formatted_dialogue }}\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=# Email Content Cleaner\n\nTransform cluttered email conversations into clean, readable dialogue by removing digital noise while preserving meaningful communication.\n\n## What to Remove\n\n**Digital Clutter:**\n- URLs, hyperlinks, and web addresses in any format\n- Email signatures with contact details and company info\n- Unsubscribe links and privacy policy references\n- HTML markup, formatting codes, and styling elements\n- Image placeholders, attachment references, and media links\n- Tracking codes, analytics pixels, and marketing elements\n- Legal disclaimers and automated footer text\n- \"View in browser\" or similar technical links\n- Repetitive branding and promotional signatures\n\n## What to Preserve\n\n**Essential Communication:**\n- Core conversation content and messages\n- Speaker identification (Customer:, Support:, AI:, etc.)\n- Natural dialogue flow and context\n- Emotional tone and conversational intent\n- Meaningful line breaks that enhance readability\n- Important details relevant to the discussion\n\n## Output Guidelines\n\n**Format Requirements:**\n- Present clean, readable text only\n- Maintain clear speaker labels\n- Use logical paragraph structure\n- Remove excessive whitespace between speakers\n- Keep only line breaks that improve clarity\n- Preserve the natural conversation rhythm\n\n## Example Transformation\n\n**Original Email:**\n```\nCustomer: Hi there! Check out this amazing deal: https://shop.example.com/sale\n[Click Here to Shop Now]\nI'm really interested in your services.\n\nBest regards,\nJohn Smith\n📧 john@email.com | 📱 555-0123\nFollow us: Facebook | Twitter\nUnsubscribe | Privacy Policy | View in Browser\n\nAI Response: Thanks for reaching out! Visit our website at www.oursite.com \nfor more info. I'd be happy to help with your inquiry.\n```\n\n**Cleaned Result:**\n```\nCustomer: Hi there! I'm really interested in your services.\n\nBest regards,\nJohn Smith\n\nAI Response: Thanks for reaching out! I'd be happy to help with your inquiry.\n```\n\nThe goal is to extract the human conversation from the digital wrapper, creating a clear dialogue that focuses on the actual communication between participants."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -4912,
+        272
+      ],
+      "id": "acf5b6d8-13c3-4abf-87e8-8defe159836a",
+      "name": "Text Only"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "97d911f2-2b81-4277-a766-21b4f4f345f5",
+              "leftValue": "={{ $json.output.previousEmails }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -2240,
+        464
+      ],
+      "id": "72b407b0-2344-44af-b6e5-851f90d640ff",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "16e51dea-f92d-4707-9054-3448d53de3df",
+              "name": "thread exists.",
+              "value": "The previous email thread exists.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2144,
+        272
+      ],
+      "id": "2aeae67c-7cbc-4bc5-b026-6ffe8382010d",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e8557c68-4c52-46c7-9777-85d4d0f063e4",
+              "name": " does not exist.",
+              "value": "The previous email does not exist.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2144,
+        640
+      ],
+      "id": "19e659ba-e13d-4e92-be3c-a5541e2e3868",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=customer name:{{ $('pass note and name').item.json.name || \"N/A\"}}\ntime now:{{ $now.toISO() }}\n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=> You are an AI Email Greeting Generator.|> Your only task is to generate the **greeting line** at the beginning of an email based on the **time of day** and whether the email is **new or a follow-up**.>> --->> ### 🔹 Rules:>> #### 1. **If this is a *new* email (no previous thread):**>> * Use a **time-based greeting**:>>   * **5:00 AM – 11:59 AM** → `Good morning,`>   * **12:00 PM – 4:59 PM** → `Good afternoon,`>   * **5:00 PM – 8:59 PM** → `Good evening,`>   * **Otherwise** → `Hello` or `Hey there`> * **Always include the customer's name if available**, like:>   → `Good morning, Sarah,`>> #### 2. **If this is a *follow-up* (previous email thread exists):**>> * Use a **friendly re-engagement greeting**:>>   * Examples:>>     * `Hi again,`>     * `Welcome back!`>     * `Thanks for following up.`>     * `Nice to hear from you again.`> * **Include the customer's name if available**, like:>   → `Hi again, Sarah,`>> --->> ✅ **Output only the greeting line.**> ✅ **Do not include any other content.**> ✅ **Follow punctuation and casing exactly as shown.**---"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -1936,
+        448
+      ],
+      "id": "d3232dd9-4952-46c5-ac2d-1bdc9158f7e2",
+      "name": "MailGreeter"
+    },
+    {
+      "parameters": {
+        "tableId": "n8n to supabase",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "important",
+              "fieldValue": "TRUE"
+            },
+            {
+              "fieldId": "hubspot_crm_id",
+              "fieldValue": "={{ $('HubSpot_CRM').item.json.id || \"N/A\"}}"
+            },
+            {
+              "fieldId": "thread_id",
+              "fieldValue": "={{ $('Extract Email Address').item.json.threadIdToMatch }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $('Fix \\'From\\'').item.json.from_emails[0] }}"
+            },
+            {
+              "fieldId": "replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $('pass note and name').item.json.name }}"
+            },
+            {
+              "fieldId": "CRM_notes",
+              "fieldValue": "={{ $('pass note and name').item.json.notes || \"no notes\" }}"
+            },
+            {
+              "fieldId": "bookcall",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "escalation",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "Previous_Emails_Summary",
+              "fieldValue": "={{ $('Fix Email Format').item.json.output.previousEmails || \"No previous thread summary exists.\"}}"
+            },
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "Customer_Email",
+              "fieldValue": "={{ $('Fix Email Format').item.json.output.newProspectEmail }}"
+            },
+            {
+              "fieldId": "edited",
+              "fieldValue": "0"
+            },
+            {
+              "fieldId": "email_subject",
+              "fieldValue": "={{ $('Get many messages').item.json.subject }}"
+            },
+            {
+              "fieldId": "removed",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "Important_replied",
+              "fieldValue": "FALSE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        416,
+        1424
+      ],
+      "id": "5174df08-dc7a-4298-8763-849c774b4deb",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -768,
+        736
+      ],
+      "id": "1c59c6ea-d0c6-4c8b-b77b-2e038ed664d4",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "codestral-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        672
+      ],
+      "id": "7de15ac0-42b6-4938-9b8d-67b7aeb16cad",
+      "name": "Mistral Cloud Chat Model",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "0nx7dAnMpj5n4Kw8",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistral-tiny-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        1968
+      ],
+      "id": "b9a04629-ed92-4710-8597-ef43fee85a0f",
+      "name": "Mistral Cloud Chat Model1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "0nx7dAnMpj5n4Kw8",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "f246d305-2ebd-468c-955a-d89e6992b92e",
+              "leftValue": "={{ $json.output.label }}",
+              "rightValue": "Important",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -112,
+        1520
+      ],
+      "id": "b8565898-c7a2-49c3-a5c8-61fc329c5760",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "language": "python",
+        "pythonCode": "# Function to clean subject by removing all leading \"Subject: \" prefixes\ndef clean_subject(subject):\n    while subject.lower().startswith(\"subject: \"):\n        subject = subject[len(\"Subject: \"):]\n    return subject.strip()\n\n# Extract only email addresses from the field\ndef extract_emails(field):\n    return [entry['address'] for entry in field.get('value', [])]\n\noutput = []\nfor item in items:\n    data = item.get('json', {})\n    \n    subject = data.get('subject', '')\n    from_field = data.get('from', {})\n    to_field = data.get('to', {})\n    thread_id = data.get('threadId', '')  # get threadId\n    text = data.get('text', '')            # get text\n    \n    cleaned_subject = clean_subject(subject)\n    from_emails = extract_emails(from_field)\n    to_emails = extract_emails(to_field)\n    \n    new_item = {\n        'cleaned_subject': cleaned_subject,\n        'from_emails': from_emails,\n        'to_emails': to_emails,\n        'threadId': thread_id,\n        'text': text\n    }\n    \n    output.append({'json': new_item})\n\nreturn output\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -6064,
+        544
+      ],
+      "id": "9d667745-ac40-43af-ac88-9d228bbee691",
+      "name": "Fix 'From'"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "9c9e3321-71f6-4638-b300-b1008afb820a"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "3de9e7d3-f507-491d-9876-312a750b98e0",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Customer Service",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "da01cf14-4ab7-4ee5-b7b1-4299a6000f24",
+                    "leftValue": "={{ $json.output.category }}",
+                    "rightValue": "Other",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -400,
+        512
+      ],
+      "id": "1a5feeec-e3a9-4d16-872c-1be4168e8f93",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "id": "3d3b88fc-ffea-4d35-ad93-5e18b89ae8ba",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -6544,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "limit": 2,
+        "simple": false,
+        "filters": {},
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -6272,
+        544
+      ],
+      "id": "1bc433e9-d846-4374-9880-e129729d12cc",
+      "name": "Get many messages",
+      "webhookId": "465c169f-c380-4322-9f5b-0762870b80c1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5BRLvA6jN2jDre12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "8lS2SvxgCN5MTjLY",
+          "mode": "list",
+          "cachedResultName": "sales"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email_address": "={{ $('Extract Email Address').item.json.emailAddress }}",
+            "subject": "={{ $item(\"0\").$node[\"Loop Over Items\"].json[\"cleaned_subject\"] }}",
+            "email_body": "={{ $('Fix Email Format').item.json.output.newProspectEmail }}",
+            "greeter": "={{ $('MailGreeter').item.json.text }}",
+            "crm_note": "= {{ $('pass note and name').item.json.notes ||\"no notes \" }}",
+            "hubspot_id": "={{ $('HubSpot_CRM').item.json.id ||\"N\\A\"}}",
+            "thread_id": "={{ $('Extract Email Address').item.json.threadIdToMatch }}",
+            "thread_context": "=\n{{ $('Fix Email Format').item.json.output.previousEmails ||\"no previous summary of email thread\"}}",
+            "customer_name": "={{ $item(\"0\").$node[\"pass note and name\"].json[\"name\"] ||\"N/A\"}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email_address",
+              "displayName": "email_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "email_body",
+              "displayName": "email_body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "greeter",
+              "displayName": "greeter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "thread_context",
+              "displayName": "thread_context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "thread_id",
+              "displayName": "thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "hubspot_id",
+              "displayName": "hubspot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "crm_note",
+              "displayName": "crm_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ed1ac5eb-fa7c-4bb4-bb29-3d78b5e320af",
+      "name": "Execute Workflow"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "EdVWO7BYxACst5Ye",
+          "mode": "list",
+          "cachedResultName": "csr"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "email_address": "={{ $('Extract Email Address').item.json.emailAddress }}",
+            "email_body": "={{ $('Fix Email Format').item.json.output.newProspectEmail }}",
+            "subject": "={{ $item(\"0\").$node[\"Loop Over Items\"].json[\"cleaned_subject\"] }}",
+            "thread_id": "={{ $('Extract Email Address').item.json.threadIdToMatch }}",
+            "hubspot_id": "={{ $('HubSpot_CRM').item.json.id ||\"N\\A\"}}",
+            "crm_note": "= {{ $('pass note and name').item.json.notes ||\"no notes \" }}",
+            "greeter": "={{ $('MailGreeter').item.json.text }}",
+            "thread_context": "= {{ $('Fix Email Format').item.json.output.previousEmails ||\"no previous summary of email thread\"}}",
+            "customer_name": "={{ $item(\"0\").$node[\"pass note and name\"].json[\"name\"] ||\"N/A\"}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "email_address",
+              "displayName": "email_address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "email_body",
+              "displayName": "email_body",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "thread_id",
+              "displayName": "thread_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "hubspot_id",
+              "displayName": "hubspot_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "subject",
+              "displayName": "subject",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "greeter",
+              "displayName": "greeter",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "crm_note",
+              "displayName": "crm_note",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "thread_context",
+              "displayName": "thread_context",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        -64,
+        528
+      ],
+      "id": "a5dc0172-0615-4f20-84f7-d78c7e42dc08",
+      "name": "Execute Workflow1"
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct-0905",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -2912,
+        656
+      ],
+      "id": "36e45d83-4883-4a09-bc0c-aab89fb877e3",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Categorisation": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Importance Scoring": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Categorisation",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [
+          {
+            "node": "Done",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Get Full Thread",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Extract Email Address",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser2": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Importance Scoring",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Inbound": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Email Address": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "new?": {
+      "main": [
+        [
+          {
+            "node": "take note from CRM",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "pass note and name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser6": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Fix Email Format",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix Email Format": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Notes into Markdown": {
+      "main": [
+        [
+          {
+            "node": "pass note and name",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HubSpot_CRM": {
+      "main": [
+        [
+          {
+            "node": "new?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "take note from CRM": {
+      "main": [
+        [
+          {
+            "node": "Format Notes into Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "HubSpot_CRM",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "pass note and name": {
+      "main": [
+        [
+          {
+            "node": "Fix Email Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Full Thread": {
+      "main": [
+        [
+          {
+            "node": "Reformat Thread",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reformat Thread": {
+      "main": [
+        [
+          {
+            "node": "organize conversations",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "organize conversations": {
+      "main": [
+        [
+          {
+            "node": "Text Only",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Text Only",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Only": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "MailGreeter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "MailGreeter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MailGreeter": {
+      "main": [
+        [
+          {
+            "node": "Categorisation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Categorisation",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "MailGreeter",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Importance Scoring",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fix 'From'": {
+      "main": [
+        [
+          {
+            "node": "Filter Inbound",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute Workflow1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Importance Scoring",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get many messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many messages": {
+      "main": [
+        [
+          {
+            "node": "Fix 'From'",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a row": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Fix Email Format",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "4e333730-f661-43b2-9396-77564d916051",
+  "meta": {
+    "instanceId": "6baf55fe0ef77c33d6fa749473787d2579a5b07f1458cc63604927053b912082"
+  },
+  "id": "3WUWJiAro4jYShPg",
+  "tags": []
+}
