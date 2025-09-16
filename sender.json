@@ -1,0 +1,1878 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "id": "388c8977-a64c-4f44-afd0-43eadeb5525a",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -3056,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "tableId": "n8n to supabase",
+        "returnAll": true,
+        "matchType": "allFilters",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "message_sent",
+              "condition": "eq",
+              "keyValue": "FALSE"
+            },
+            {
+              "keyName": "removed",
+              "condition": "eq",
+              "keyValue": "FALSE"
+            }
+          ]
+        }
+      },
+      "id": "da7cef9e-2d4d-4250-a548-d9bacf286f0b",
+      "name": "Query Supabase - Unsent Messages",
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -2496,
+        1104
+      ],
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.permission }}",
+                    "rightValue": "Approval",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "bbf6db74-7f06-4c72-83d8-3ab37496363c"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "362a7260-fcab-4111-9cc0-e9330a1d2d26",
+                    "leftValue": "{{ $json.permission }}",
+                    "rightValue": "Manual handel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "e2ebb017-ac9e-4d44-bfea-9d72964b5b7c",
+                    "leftValue": "={{ $json.escalation }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "beafb051-e2b9-4f91-b84c-779e41ce5f38",
+                    "leftValue": "={{ $json.important }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "a1b399ea-5c6b-4a39-8567-95969f9ef498",
+                    "leftValue": "{{ $json.permission }}",
+                    "rightValue": "Cancel",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                },
+                "conditions": [
+                  {
+                    "id": "c9da3dd5-12b4-4912-a95b-e890f5c578da",
+                    "leftValue": "={{ $json.permission }}",
+                    "rightValue": "Objection",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f497050f-f5b8-45f0-9a3b-430e1ddd94da",
+      "name": "Switch - Approval",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [
+        -2080,
+        1040
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Manager just gave feedback requesting a change. \n\nHere's the draft Email your team had prepared: \n{{ $json.draft_reply }}\n\n\nHere's the managers requested changes: \n{{ $json.feedback }}\n\n\nHere's Neswave specific information which you can use as context for writing the email: {{ $json.from_knowledgebase ||\"N/A\"}}\nPrevious Emails Summary:{{ $json.Previous_Emails_Summary }}\n\nRewrite the draft email in line with the managers request. ",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You work in the customer support team at Neswave, an AI Automation Agency. When Neswave receives an email from a customer or lead requesting support, your team drafts an appropriate support response.\n\nThe incoming email can be:\n- A first-time support request (no prior ticket exists)\n- A follow-up on an existing support ticket\n- A bug report or feature request from an existing customer\n\nIn every case, your draft response should aim to resolve the issue or, if you need more information, politely request the details required.\n\nThe draft response is then sent to your support manager for feedback. If the manager asks for changes, it is your job to modify the email based on that feedback.\n\nYour output must closely follow the schema defined.\n\nDon’t make anything up.\n\nSign off emails as abdullah, Neswave Support\n\n timezone: {{ $now.toFormat(\"cccc, dd LLL yyyy 'at' t\") }}\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -1392,
+        1520
+      ],
+      "id": "049e7e5d-6fe6-4ecc-83b6-b7f54f33983b",
+      "name": "revision Agent"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "n8n to supabase",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "thread_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.threadId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "permission",
+              "fieldValue": "Waiting"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1024,
+        1696
+      ],
+      "id": "3ef2aba4-dab6-42e8-a1ee-030f00842b57",
+      "name": "Update a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        -2336,
+        1088
+      ],
+      "id": "8a319f13-f401-4b1f-bccb-99dd0a6b2fde",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "name": "Replace Me",
+      "typeVersion": 1,
+      "position": [
+        -2288,
+        1264
+      ],
+      "id": "547d7689-d5f4-40a5-848e-34393bc5a94a"
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $json.thread_id }}",
+        "messageId": "198b5be10757c4d1",
+        "message": "={{ $json.draft_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1632,
+        640
+      ],
+      "id": "a63d1200-6e8f-4031-b7dd-24e40a67df30",
+      "name": "Reply to a message",
+      "webhookId": "b23a885b-057d-48ff-884a-34c7c184ff3e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5BRLvA6jN2jDre12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "n8n to supabase",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "thread_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.threadId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "TRUE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1424,
+        640
+      ],
+      "id": "a5d8cbed-6c3d-406c-a923-d4fbea09fdff",
+      "name": "Update a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $json.thread_id }}",
+        "messageId": "={{ $json.thread_id }}",
+        "message": "={{ $json.human_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1552,
+        832
+      ],
+      "id": "1b98437d-5ebd-42cd-9c26-0bd0c13504a1",
+      "name": "Reply to a message1",
+      "webhookId": "b23a885b-057d-48ff-884a-34c7c184ff3e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5BRLvA6jN2jDre12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "n8n to supabase",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "thread_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.threadId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "TRUE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        832
+      ],
+      "id": "2b949961-116b-48a0-9a6f-0684f062b00b",
+      "name": "Update a row2",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $json.thread_id }}",
+        "messageId": "={{ $json.thread_id }}",
+        "message": "={{ $json.Escalated_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1728,
+        1616
+      ],
+      "id": "39a5ff8b-bded-4853-896c-b8fc67d6d378",
+      "name": "Reply to a message2",
+      "webhookId": "b23a885b-057d-48ff-884a-34c7c184ff3e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5BRLvA6jN2jDre12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "n8n to supabase",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "thread_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.threadId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "TRUE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1104,
+        1056
+      ],
+      "id": "1467a69a-2f8a-48a3-bc05-f3c5f721a048",
+      "name": "Update a row3",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "thread",
+        "operation": "reply",
+        "threadId": "={{ $json.thread_id }}",
+        "messageId": "={{ $json.thread_id }}",
+        "message": "={{ $json.Important_reply }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        -1248,
+        1280
+      ],
+      "id": "227b9ace-0e40-4681-8bde-5a5faf40897e",
+      "name": "Reply to a message3",
+      "webhookId": "b23a885b-057d-48ff-884a-34c7c184ff3e",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "5BRLvA6jN2jDre12",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "tableId": "n8n to supabase",
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "thread_id",
+              "condition": "eq",
+              "keyValue": "={{ $json.threadId }}"
+            }
+          ]
+        },
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "TRUE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -1040,
+        1280
+      ],
+      "id": "cb868a46-26a9-4744-99c2-85bd88b62b30",
+      "name": "Update a row4",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer pat-na1-a18dc929-bad7-412a-a539-b6049dd2be98"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"email\": \"{{ $('Extract Email Address').item.json.emailAddress }}\",\n    \"firstname\": \"{{ $('NameScape and summarize').item.json.output.name }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -32,
+        224
+      ],
+      "id": "7509fc23-e3cc-4641-9bb3-eead1454a647",
+      "name": "Create Contact1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $json[\"output\"][\"summary\"] }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $('hubSpot_crm_id').item.json.properties.hs_object_id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "a24cf8fe-fcce-4594-8608-790f02b92ee2",
+      "name": "Create Note with Contact Association2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $('new?1').item.json.output.summary }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $json.id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        224
+      ],
+      "id": "55f16c5f-9a12-43fe-9b50-fc9d344f2d92",
+      "name": "Create Note with Contact Association3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -656,
+        176
+      ],
+      "id": "bb4168e3-ddea-49a2-b45e-3d57b93ca519",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer hubspotapi"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"email\": \"{{ $('Query Supabase - Unsent Messages').item.json.email }}\",\n    \"firstname\": \"{{ $('Query Supabase - Unsent Messages').item.json.customer_name }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        1648
+      ],
+      "id": "a8192a33-0281-4878-b8ab-4899c27d4ca6",
+      "name": "Create Contact"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $('Basic LLM Chain1').item.json.text }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $('Query Supabase - Unsent Messages').item.json.hubspot_crm_id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        256,
+        1424
+      ],
+      "id": "931c52f3-af8c-4f6a-a6f4-d8adee766db7",
+      "name": "Create Note with Contact Association"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $('Basic LLM Chain1').item.json.text }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $json.id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        1616
+      ],
+      "id": "456af46b-1de4-4dcf-8b90-db5cacd5ef98",
+      "name": "Create Note with Contact Association4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=- Incoming customer email: {{ $json.Customer_Email }}  \n- Our reply:{{ $json.Important_reply }}  \n- Previous CRM history: {{ $json.CRM_notes }} \n",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an email summarization assistant for a customer service team. Your job is to read both the customer’s emails and our replies and create a single continuous summary string in JSON format.  Instructions:  1. Extract and paraphrase — never copy raw email text.   2. For each interaction, include only:  Customer’s questions, issues, or concerns.  Our responses and solutions.  Promises, commitments, or next steps.  Resolutions achieved.    3. Separate interactions with numbering (1., 2., etc.) or \"---\".   4. Use short, professional sentences for CRM notes.   5. Keep tone neutral and factual — avoid unnecessary details.   6. Output only valid JSON in this structure:    {   \"summary\": \"string\" }  Example Output:  {   \"summary\": \"1. Customer reported delayed order delivery. We apologized, confirmed order status, and promised delivery within 2 days. Resolved by upgrading to express shipping. --- 2. Customer asked about refund policy. We explained the 14-day return window and shared return instructions. No further action needed.\" }  Your task: Given the customer’s email text and our reply, produce the JSON object exactly in this format. The \"summary\" value must be one continuous string containing all summarized interactions.   ---"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -464,
+        1456
+      ],
+      "id": "6b6753ce-6fe5-453c-ac84-512c4a0f98d3",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer pat-na1-a18dc929-bad7-412a-a539-b6049dd2be98"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"email\": \"{{ $('Extract Email Address').item.json.emailAddress }}\",\n    \"firstname\": \"{{ $('NameScape and summarize').item.json.output.name }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -192,
+        704
+      ],
+      "id": "050c593b-89b4-4d17-9134-1b4bc892b243",
+      "name": "Create Contact2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0cccd33-bbc0-4bce-84fc-e34ec66d29d1",
+              "leftValue": "={{ $json.hubspot_crm_id }}",
+              "rightValue": "N/A",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -448,
+        528
+      ],
+      "id": "b78b1fa6-e2ab-4c81-bd6d-b5b5fe9fd855",
+      "name": "new?2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $json[\"output\"][\"summary\"] }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $('hubSpot_crm_id').item.json.properties.hs_object_id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -160,
+        480
+      ],
+      "id": "90c45f3c-8efa-4ead-9ee8-adea6287d9a1",
+      "name": "Create Note with Contact Association5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $('new?2').item.json.output.summary }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $json.id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        112,
+        704
+      ],
+      "id": "1f9d4f27-288e-4442-877b-c7107110102e",
+      "name": "Create Note with Contact Association6"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=- Incoming customer email: {{ $json.Customer_Email }}  \n- Our reply: {{ $json.human_reply }} \n- Previous CRM history: {{ $json.CRM_notes }} ",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an email summarization assistant for a customer service team. Your job is to read both the customer’s emails and our replies and create a single continuous summary string in JSON format.  Instructions:  1. Extract and paraphrase — never copy raw email text.   2. For each interaction, include only:  Customer’s questions, issues, or concerns.  Our responses and solutions.  Promises, commitments, or next steps.  Resolutions achieved.    3. Separate interactions with numbering (1., 2., etc.) or \"---\".   4. Use short, professional sentences for CRM notes.   5. Keep tone neutral and factual — avoid unnecessary details.   6. Output only valid JSON in this structure:    {   \"summary\": \"string\" }  Example Output:  {   \"summary\": \"1. Customer reported delayed order delivery. We apologized, confirmed order status, and promised delivery within 2 days. Resolved by upgrading to express shipping. --- 2. Customer asked about refund policy. We explained the 14-day return window and shared return instructions. No further action needed.\" }  Your task: Given the customer’s email text and our reply, produce the JSON object exactly in this format. The \"summary\" value must be one continuous string containing all summarized interactions.   ---"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -880,
+        512
+      ],
+      "id": "ceef695c-e517-48d5-8e6a-47dd12f7177c",
+      "name": "Basic LLM Chain2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/contacts",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer pat-na1-a18dc929-b"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"email\": \"{{ $('Extract Email Address').item.json.emailAddress }}\",\n    \"firstname\": \"{{ $('NameScape and summarize').item.json.output.name }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        432,
+        1248
+      ],
+      "id": "b5a35dda-b841-49fd-b62d-fef218ea0897",
+      "name": "Create Contact3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0cccd33-bbc0-4bce-84fc-e34ec66d29d1",
+              "leftValue": "={{ $json.hubspot_crm_id }}",
+              "rightValue": "N/A",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        176,
+        1072
+      ],
+      "id": "22aac043-8f8c-4515-897d-c9b7e66a8766",
+      "name": "new?3"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $json[\"output\"][\"summary\"] }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $('hubSpot_crm_id').item.json.properties.hs_object_id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        464,
+        1024
+      ],
+      "id": "8eca6f4f-ad9f-4204-a0aa-502b86e226c9",
+      "name": "Create Note with Contact Association7"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.hubapi.com/crm/v3/objects/notes",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"properties\": {\n    \"hs_note_body\": \"{{ $('new?3').item.json.output.summary }}\",\n    \"hs_timestamp\": \"{{ Date.now() }}\"\n  },\n  \"associations\": [\n    {\n      \"to\": {\n        \"id\": \"{{ $json.id }}\"\n      },\n      \"types\": [\n        {\n          \"associationCategory\": \"HUBSPOT_DEFINED\",\n          \"associationTypeId\": 202\n        }\n      ]\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        736,
+        1248
+      ],
+      "id": "7eb2defc-6d17-461b-a3e9-43b7b7feb378",
+      "name": "Create Note with Contact Association8"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=- Incoming customer email: {{ $json.Customer_Email }}  \n- Our reply:{{ $json.Escalated_reply }}\n- Previous CRM history: {{ $json.CRM_notes }} ",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an email summarization assistant for a customer service team. Your job is to read both the customer’s emails and our replies and create a single continuous summary string in JSON format.  Instructions:  1. Extract and paraphrase — never copy raw email text.   2. For each interaction, include only:  Customer’s questions, issues, or concerns.  Our responses and solutions.  Promises, commitments, or next steps.  Resolutions achieved.    3. Separate interactions with numbering (1., 2., etc.) or \"---\".   4. Use short, professional sentences for CRM notes.   5. Keep tone neutral and factual — avoid unnecessary details.   6. Output only valid JSON in this structure:    {   \"summary\": \"string\" }  Example Output:  {   \"summary\": \"1. Customer reported delayed order delivery. We apologized, confirmed order status, and promised delivery within 2 days. Resolved by upgrading to express shipping. --- 2. Customer asked about refund policy. We explained the 14-day return window and shared return instructions. No further action needed.\" }  Your task: Given the customer’s email text and our reply, produce the JSON object exactly in this format. The \"summary\" value must be one continuous string containing all summarized interactions.   ---"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -256,
+        1056
+      ],
+      "id": "015926a1-71b5-4557-926b-0d2759516cf8",
+      "name": "Basic LLM Chain3"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0cccd33-bbc0-4bce-84fc-e34ec66d29d1",
+              "leftValue": "={{ $json.hubspot_crm_id }}",
+              "rightValue": "N/A",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -272,
+        16
+      ],
+      "id": "bf25c807-b312-40c1-a9eb-b2efe5c85849",
+      "name": "new?4"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash-preview-04-17-thinking",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1376,
+        1760
+      ],
+      "id": "0a01f546-058d-445f-9aff-e17181b8597c",
+      "name": "Google Gemini Chat Model14",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"emailBody\": {\n      \"type\": \"string\",\n      \"description\": \"The body content of the email reply to be sent to the prospect in line with managers feedback.\"\n    },\n      \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Reasoning for your response.\"\n    }\n  },\n  \"required\": [\n    \"emailBody\",\n    \"reason\",\n    \"escalate\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -1184,
+        1744
+      ],
+      "id": "b92687f7-5cc5-4029-839b-c73a23e86dd0",
+      "name": "Structured Output Parser4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "114c75a1-49fa-4ecc-ade2-729908f4ecaf",
+              "leftValue": "={{ $json.Objection_nai }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "false",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1696,
+        1392
+      ],
+      "id": "1a7b07c6-6dad-4aed-895c-ea3d820dea6b",
+      "name": "If3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=- Incoming customer email: {{ $json.Customer_Email }}  \n- Our reply: {{ $json.draft_reply }}  \n- Previous CRM history: {{ $json.CRM_notes }} ",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an email summarization assistant for a customer service team.\nYour job is to read both the customer’s emails and our replies and create a single continuous summary string in JSON format.\n\nInstructions:\n\n1. Extract and paraphrase — never copy raw email text.\n\n\n2. For each interaction, include only:\n\nCustomer’s questions, issues, or concerns.\n\nOur responses and solutions.\n\nPromises, commitments, or next steps.\n\nResolutions achieved.\n\n\n\n3. Separate interactions with numbering (1., 2., etc.) or \"---\".\n\n\n4. Use short, professional sentences for CRM notes.\n\n\n5. Keep tone neutral and factual — avoid unnecessary details.\n\n\n6. Output only valid JSON in this structure:\n\n\n\n{\n  \"summary\": \"string\"\n}\n\nExample Output:\n\n{\n  \"summary\": \"1. Customer reported delayed order delivery. We apologized, confirmed order status, and promised delivery within 2 days. Resolved by upgrading to express shipping. --- 2. Customer asked about refund policy. We explained the 14-day return window and shared return instructions. No further action needed.\"\n}\n\nYour task: Given the customer’s email text and our reply, produce the JSON object exactly in this format. The \"summary\" value must be one continuous string containing all summarized interactions.\n\n\n---"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -720,
+        32
+      ],
+      "id": "75b87cc2-0ce2-4b36-a0ce-dd524b0d43ef",
+      "name": "Basic LLM Chain4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "5ff80de2-50a2-4d9e-b759-fea8523dac22",
+              "leftValue": "={{ $json.Important_reply }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1664,
+        1152
+      ],
+      "id": "d9993dba-2dc6-4c4c-b8de-6b6c97f94e24",
+      "name": "If4"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b0cccd33-bbc0-4bce-84fc-e34ec66d29d1",
+              "leftValue": "={{ $('Query Supabase - Unsent Messages').item.json.hubspot_crm_id }}",
+              "rightValue": "N/A",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -32,
+        1472
+      ],
+      "id": "98648f30-582b-4766-9871-51030d968022",
+      "name": "new?1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        1600
+      ],
+      "id": "c6f9c4fb-d1a0-4d17-8e9e-fccf5cf4b9e8",
+      "name": "Google Gemini Chat Model5",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        656
+      ],
+      "id": "53f17b66-44e0-4269-b1ad-d7359fbf004a",
+      "name": "Google Gemini Chat Model15",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -192,
+        1200
+      ],
+      "id": "945e30a6-9219-40a0-8c7f-8c76a7f71a32",
+      "name": "Google Gemini Chat Model16",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Query Supabase - Unsent Messages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Supabase - Unsent Messages": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch - Approval": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to a message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to a message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "revision Agent": {
+      "main": [
+        [
+          {
+            "node": "Update a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message": {
+      "main": [
+        [
+          {
+            "node": "Update a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message1": {
+      "main": [
+        [
+          {
+            "node": "Update a row2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row2": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message2": {
+      "main": [
+        [
+          {
+            "node": "Update a row3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row3": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message3": {
+      "main": [
+        [
+          {
+            "node": "Update a row4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update a row4": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact1": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association2": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association3": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association4": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "new?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact2": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "new?2": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Contact2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association5": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association6": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain2": {
+      "main": [
+        [
+          {
+            "node": "new?2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Contact3": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "new?3": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Contact3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association7": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Note with Contact Association8": {
+      "main": [
+        [
+          {
+            "node": "Switch - Approval",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain3": {
+      "main": [
+        [
+          {
+            "node": "new?3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "new?4": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Contact1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model14": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "revision Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser4": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "revision Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If3": {
+      "main": [
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "revision Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain4": {
+      "main": [
+        [
+          {
+            "node": "new?4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If4": {
+      "main": [
+        [
+          {
+            "node": "Reply to a message3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Replace Me",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "new?1": {
+      "main": [
+        [
+          {
+            "node": "Create Note with Contact Association",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create Contact",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model5": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model15": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model16": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "6baf55fe0ef77c33d6fa749473787d2579a5b07f1458cc63604927053b912082"
+  }
+}
