@@ -1,0 +1,1540 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=New email just came in. \n\nHere's the email: {{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}\n\nemail subject:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nHere's a summary of the thread the email is on: \n{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\n\nClassify it.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You're a sales inbox manager. \n\nThe emails that come in from clients are either to book a call or to get more info. \n\nYour job is to classify each email as a calendar or information email. \n\nCalendar emails are those where the prospect suggests being booked in for a call. \n\nInformation emails are those which require a reply from the sales team to progress further. This could be the prospect asking for information or making an enquiry. "
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -1200,
+        512
+      ],
+      "id": "12bd59ae-7fd0-44c2-882e-65991bd11285",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"calendar\": {\n      \"type\": \"boolean\",\n      \"description\": \"True if Calendar Email and False if Information Email\"\n    }\n  },\n  \"required\": [\n    \"newProspectEmail\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -1024,
+        720
+      ],
+      "id": "c0bfc435-3284-444e-906a-a8cdb5a72d68",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        2144,
+        272
+      ],
+      "id": "400a5e70-1aa2-4212-85c8-290c4261fa82",
+      "name": "Google Gemini Chat Model10",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1376,
+        1600
+      ],
+      "id": "abe05d8c-d748-4c3f-8307-70ef64754d22",
+      "name": "Quality Control LLM1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"finalEmailBody\": {\n      \"type\": \"string\",\n      \"description\": \"The final, reviewed email response\"\n    },\n    \"qualityScore\": {\n      \"type\": \"number\",\n      \"minimum\": 1,\n      \"maximum\": 10,\n      \"description\": \"Quality score of the response (1-10)\"\n    },\n    \"improvements\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Improvements made to the original response\"\n    },\n    \"escalate\": {\n      \"type\": \"boolean\",\n      \"description\": \"Final decision on escalation\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Reasoning for the final decision\"\n    },\n    \"tags\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Tags for categorization and tracking\"\n    }\n  },\n  \"required\": [\"finalEmailBody\", \"qualityScore\", \"improvements\", \"escalate\", \"reason\", \"tags\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        1520
+      ],
+      "id": "e2f2f22a-38a6-4aeb-b3f2-5602460e30dc",
+      "name": "Quality Control Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Review and finalize the customer support response:\n\nprevious email:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\nOriginal Email:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}\nClassification:{{ $('Email Classifier Agent1').item.json.output.category }}\nDraft Response: {{ $json.output.emailBody }}\nResponse Metadata: {{ $('Response Generator Agent').item.json.output.tone }}\n\nReview for quality, accuracy, tone, and completeness. Make final improvements.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are the quality control specialist for Neswave customer support. Your job is to review and finalize customer support responses before they are sent.\n\nIMPORTANT: Do NOT generate or suggest an email subject line unless explicitly instructed.\n\nQuality Checklist:\n1. Accuracy: Is the information correct and helpful?\n2. Completeness: Does it address all customer concerns?\n3. Tone: Is the tone appropriate for the situation?\n4. Clarity: Is the response clear and easy to understand?\n5. Branding: Does it maintain Neswave's voice and standards?\n6. Grammar: Is it well-written and professional?\n7. Action Items: Are next steps clear?\n8. Escalation: Is the escalation decision appropriate?\n\nYour responsibilities:\n- Fix any inaccuracies or unclear statements\n- Adjust tone if needed\n- Add missing information\n- Improve clarity and structure\n- Ensure proper sign-off (\"Abdullah, Neswave Support\")\n- Provide a quality score from 1 to 10\n- List specific improvements made\n- Make a final decision on whether to escalate to a human agent\n- Keep the **original greeter** and always **sign off as “Abdullah, Neswave Support”\n\nAgain: Do NOT generate or include an email subject line unless explicitly told to do so.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1376,
+        1328
+      ],
+      "id": "c6eaa690-a348-498e-8677-ece64262d2a4",
+      "name": "Quality Control Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        1728,
+        1536
+      ],
+      "id": "86890be6-e986-422e-9c84-573758c759eb",
+      "name": "Google Gemini Chat Model11",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output.finalEmailBody }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "---|You’re rewriting automated customer support emails to sound like they came from a real person on the team — not a bot or a template.---**YOUR GOAL:**Make the email sound like something a helpful colleague would write. It should feel casual, warm, and human — while still being clear and professional.---**STYLE RULES:*** Use a natural, conversational tone (like explaining to a friend or coworker)* Avoid robotic or overly formal language* Vary sentence structure and length to sound more human* Use contractions and casual phrasing when it makes sense* Match the emotional tone and urgency of the original message* End naturally — no need for generic closings* Keep the **original greeter** and always **sign off as “Abdullah, Neswave Support”**---**ABSOLUTELY AVOID THESE PHRASES:**> * “Feel free to...”> * “Don’t hesitate to...”> * “Happy to help”> * “Please let us know”> * “We’re here to help”> * “Thank you for your patience”> * “We appreciate your understanding”> * “Looking forward to hearing from you”---**DELIVERABLE:**Only output the final rewritten email — no explanation or commentary."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1744,
+        1328
+      ],
+      "id": "2b5efe87-edeb-4f7c-9e1f-9782993ccaf3",
+      "name": "Humanize email body1"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"emailBody\": {\n      \"type\": \"string\",\n      \"description\": \"The draft email response body\"\n    },\n    \"tone\": {\n      \"type\": \"string\",\n      \"enum\": [\"professional\", \"friendly\", \"empathetic\", \"urgent\"],\n      \"description\": \"Tone used in the response\"\n    },\n    \"actionItems\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Action items or next steps mentioned\"\n    },\n    \"escalationNeeded\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether this needs escalation to human agent\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Reasoning for the final decision\"\n    },\n    \"followUpRequired\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether follow-up is required\"\n    }\n  },\n  \"required\": [\"emailBody\", \"tone\", \"actionItems\", \"escalationNeeded\",\"reason\",\"followUpRequired\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1088,
+        1344
+      ],
+      "id": "896abaa9-a27e-4361-9023-35c32777d63e",
+      "name": "Response Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a customer support response based on:\n\nOriginal Email:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}\nClassification: {{ $('Email Classifier Agent1').item.json.output.category }}\nemail subject:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nKnowledge Base Info: \nCRM Notes: {{ $('When Executed by Another Workflow').item.json.notes || \"N/A\"}}\nPrevious Context: {{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\n\n\nCreate an appropriate response that addresses the customer's needs.\n",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a response generation specialist for Nesroi customer support. Your job is to create appropriate email responses based on classified customer emails and retrieved knowledge.\nResponse Guidelines:\n\nMatch tone to customer sentiment and priority level\nAddress all key topics identified in classification\nUse retrieved knowledge base information when available\nProvide clear next steps or solutions\nMaintain Neswave's friendly, professional brand voice\nSign off as \"Abdullah, Nesroi Support\"\nIf information is insufficient, indicate escalation is needed\nUse provided greeter\n\nTone Guidelines:\n\nFrustrated customers: Empathetic and solution-focused\nTechnical issues: Professional and detailed\nGeneral inquiries: Friendly and informative\nUrgent issues: Prompt and action-oriented\n\nUpsell, Downsell, and Cross-Sell Guidelines:\n\nUpsell: Include an upsell suggestion when the customer’s inquiry indicates they could benefit from a higher-tier product or service (e.g., premium features, additional services, or a subscription upgrade). Present the upsell as a solution to enhance their experience or resolve their issue more effectively. Ensure the suggestion feels natural and relevant to their needs.\n\nExample: If a customer is frustrated with limited features, suggest a premium plan that offers more functionality.\n\n\nDownsell: Offer a downsell when the customer expresses concerns about cost or complexity, recommending a more affordable or simpler alternative that still meets their core needs. Frame the downsell as a cost-effective solution to ensure satisfaction.\n\nExample: If a customer finds the current plan too expensive, suggest a basic plan with essential features.\n\n\nCross-Sell: Include a cross-sell when the customer’s inquiry suggests they could benefit from complementary products or services (e.g., add-ons, related tools, or bundled offerings). Present the cross-sell as an enhancement to their current setup.\n\nExample: If a customer asks about a specific feature, recommend a related tool or service that complements it.\n\n\nWhen to Include: Incorporate upsell, downsell, or cross-sell only when relevant to the customer’s issue or inquiry. Avoid pushing sales in cases of high frustration or urgent technical issues unless the solution directly addresses their problem. Ensure suggestions are subtle, customer-focused, and aligned with Nesroi’s brand voice.\n\nAlways aim to resolve the issue in the first response when possible."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        880,
+        1104
+      ],
+      "id": "c7dae8fa-7135-4cb3-961f-c44bc2c8ed34",
+      "name": "Response Generator Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={ $('Extract Email Address').item.json.messageId }}",
+        "tableName": "response_generator_history"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        1408
+      ],
+      "id": "04967254-0e37-46ed-958b-5aafa7264216",
+      "name": "Response Memory",
+      "credentials": {
+        "postgres": {
+          "id": "rimr3PuKgJrD4BZs",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        304,
+        1456
+      ],
+      "id": "8830bdfc-156a-4c99-ab74-87b6cfae2d2b",
+      "name": "Google Gemini Chat Model13",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following customer email and classify it:\n\nEmail:{{ $('When Executed by Another Workflow').item.json.email_body }}\nemail subject:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nPrevious Context:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\nCRM Notes:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}\n\nClassify this email by category, priority, sentiment, and identify key topics. Determine if knowledge base lookup is needed.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an email analysis agent that extracts meeting request information.\n\nExtract these details from the email:\n1. Meeting date (YYYY-MM-DD format)\n2. Meeting time (HH:MM in 24-hour format, Dhaka timezone UTC+6)\n3. Meeting duration in minutes (default: 30)\n4. Meeting purpose\n5. Requester's name\n6. Whether a specific time was requested (true/false)\n\nCurrent date/time in Dhaka: {{ $now.weekdayLong}}, {{ $now.format('dd LLL yyyy') }} at {{ $now.format('t') }}.\n\nWhen someone mentions a weekday without a specific date, they mean the next upcoming one."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        0,
+        0
+      ],
+      "id": "efe41044-98e0-4318-b1bb-058a29261ad3",
+      "name": "Email Analysis Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=requestedDate:{{ $json.output.requestedDate }}\nmeetingDuration:{{ $json.output.meetingDuration }}\nmeetingPurpose:{{ $json.output.meetingPurpose }}\nhasSpecificTimeRequest:{{ $json.output.hasSpecificTimeRequest }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=# Calendar Query Agent\n\nYou check calendar availability and find suitable meeting slots based on the information extracted from emails.\n\n## Your Task\n1. Interpret the meeting requirements provided by the Email Analysis Agent\n2. Use the get_events tool to check calendar availability for the requested date(s)\n3. Identify available time slots that meet the requirements\n4. Use the think_tool when making decisions about availability\n\n## Calendar Checking Rules\n- If a specific time is requested, check if that exact slot is available\n- If only a date is provided, find at least 2 available time slots on that date\n- Business hours are 9:00 AM to 5:00 PM (Dhaka time, UTC+6)\n- Meetings should not be scheduled outside business hours\n\nCurrent date/time in Dhaka (UTC+6): {{ $now.weekdayLong}}, {{ $now.format('dd LLL yyyy') }} at {{ $now.format('t') }}."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        704,
+        0
+      ],
+      "id": "cb8b238a-2907-4786-9779-b5042512589b",
+      "name": "Calendar Query Agent"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"requestedDate\": {\n      \"type\": \"string\",\n      \"description\": \"The date requested for the meeting (YYYY-MM-DD format)\"\n    },\n    \"requestedTime\": {\n      \"type\": \"string\",\n      \"description\": \"The time requested for the meeting (HH:MM format in 24-hour, Dhaka time), leave empty if not specified\"\n    },\n    \"meetingDuration\": {\n      \"type\": \"number\",\n      \"description\": \"The requested meeting duration in minutes, default to 30 if not specified\"\n    },\n    \"meetingPurpose\": {\n      \"type\": \"string\",\n      \"description\": \"The purpose or topic of the meeting\"\n    },\n    \"requesterName\": {\n      \"type\": \"string\",\n      \"description\": \"The name of the person requesting the meeting\"\n    },\n    \"hasSpecificTimeRequest\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether the request includes a specific time or just a date\"\n    }\n  },\n  \"required\": [\n    \"requestedDate\",\n    \"meetingDuration\",\n    \"hasSpecificTimeRequest\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        272,
+        208
+      ],
+      "id": "89faee67-0beb-451d-a71d-0ecacb7552ff",
+      "name": "Email Analysis Parser"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"availableSlots\": {\n      \"type\": \"array\",\n      \"description\": \"List of available time slots in the format {start: 'ISO8601', end: 'ISO8601'}\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"start\": {\n            \"type\": \"string\",\n            \"description\": \"Start time in ISO8601 format\"\n          },\n          \"end\": {\n            \"type\": \"string\",\n            \"description\": \"End time in ISO8601 format\"\n          }\n        }\n      }\n    },\n    \"isRequestedSlotAvailable\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether the specifically requested time slot is available\"\n    },\n    \"suggestedAlternatives\": {\n      \"type\": \"array\",\n      \"description\": \"List of suggested alternative slots if the requested one is unavailable\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"start\": {\n            \"type\": \"string\",\n            \"description\": \"Start time in ISO8601 format\"\n          },\n          \"end\": {\n            \"type\": \"string\",\n            \"description\": \"End time in ISO8601 format\"\n          }\n        }\n      }\n    },\n    \"calendarDetails\": {\n      \"type\": \"string\",\n      \"description\": \"Summary of calendar availability for the requested date\"\n    }\n  },\n  \"required\": [\n    \"calendarDetails\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1072,
+        240
+      ],
+      "id": "3cd61ba1-1578-4a10-8722-f8addc621e11",
+      "name": "Calendar Query Parser"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "muhammadriam00268@gmail.com",
+          "mode": "list",
+          "cachedResultName": "muhammadriam00268@gmail.com"
+        },
+        "timeMin": "={{ $fromAI('After', `the day before the date the user requested`, 'string') }}",
+        "timeMax": "={{ $fromAI('Before', `the day after the date the user requested`, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        848,
+        416
+      ],
+      "id": "21be4582-be8a-4a26-9584-5055c975bbdb",
+      "name": "Google Calendar1",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "BuEhRi4cF6V5ovMD",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=two availableSlots:\nstart:{{ $json.output.availableSlots[0].start }}\nend:{{ $json.output.availableSlots[0].end }}and\nstart:{{ $json.output.availableSlots[1].start }}\nend:{{ $json.output.availableSlots[1].end }}\ncalendarDetails:{{ $json.output.calendarDetails }}\nuse greeter:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"greeter\"] }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are responsible for drafting professional email responses based on the calendar availability results provided by the Calendar Query Agent.\n\nInstructions:\n\nAnalyze Availability: Review the requested meeting details (date, time, purpose, duration) and the calendar availability provided.\n\nResponse Logic:\n\nIf the requested specific time is available, confirm the booking and provide this link for scheduling: www.nesroi.com\n.\n\nIf the requested specific time is unavailable, politely decline that slot and propose two alternative available time slots.\n\nIf the request only includes a date without a time, suggest two available time slots on that date.\n\nTone & Style:\n\nKeep the email professional yet friendly.\n\nClearly mention that all times are in Dhaka time (UTC+6).\n\nInclude the meeting purpose and duration in confirmation emails.\n\nDo not disclose details of existing bookings—simply state that the requested time is not available.\n\nSignature:\nEnd all emails with:\nAbdullah, Nesroi\n\nContext Information:\n\nCurrent date/time in Dhaka (UTC+6): {{ $now.weekdayLong }}, {{ $now.format('dd LLL yyyy') }} at {{ $now.format('t') }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        1456,
+        32
+      ],
+      "id": "49fa66e0-67e0-4e2e-85cd-77815bbe7e88",
+      "name": "Response Generator Agent1"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"emailResponse\": {\n      \"type\": \"string\",\n      \"description\": \"The complete email response to be sent\"\n    },\n    \"isConfirmingBooking\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether this email is confirming a specific booking\"\n    },\n    \"confirmedStartTime\": {\n      \"type\": \"string\",\n      \"description\": \"If confirming a booking, the start time in ISO8601 format\"\n    },\n    \"confirmedEndTime\": {\n      \"type\": \"string\",\n      \"description\": \"If confirming a booking, the end time in ISO8601 format\"\n    },\n    \"meetingDetails\": {\n      \"type\": \"string\",\n      \"description\": \"Summary of the meeting details\"\n    }\n  },\n  \"required\": [\n    \"emailResponse\",\n    \"isConfirmingBooking\"\n  ]\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        1664,
+        240
+      ],
+      "id": "63c2844b-9228-4478-818d-b7e14ca4b2aa",
+      "name": "Response Parser1"
+    },
+    {
+      "parameters": {
+        "model": "deepseek/deepseek-r1-distill-llama-70b:free",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -1232,
+        720
+      ],
+      "id": "b33bc45f-c07d-41d8-acec-eb23e82c934c",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "mvE0KYBzuQpd3UYr",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ],
+      "id": "c74c5bee-e189-44d0-949d-ab3c103a40ad",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "94c45d12-e880-4a04-91d5-cc6b001c265f",
+                    "leftValue": "={{ $json.output.calendar }}",
+                    "rightValue": false,
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "true",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "calender"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ce43cffc-6c33-4e57-8cb0-35279aa34eb5",
+                    "leftValue": "={{ $json.output.calendar }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "false",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "email"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -448,
+        512
+      ],
+      "id": "430df3f7-8647-4aa5-b93f-6e5c7e553d6f",
+      "name": "Switch1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "91a190e3-b38e-4cf2-9927-72c23d9b385b",
+              "leftValue": "={{ $('Response Generator Agent').item.json.output.escalationNeeded }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        2144,
+        1360
+      ],
+      "id": "968a3768-3dfe-41c1-9615-053467d7f67b",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output.emailResponse }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "---|You’re rewriting automated customer support emails to sound like they came from a real person on the team — not a bot or a template.---**YOUR GOAL:**Make the email sound like something a helpful colleague would write. It should feel casual, warm, and human — while still being clear and professional.---**STYLE RULES:*** Use a natural, conversational tone (like explaining to a friend or coworker)* Avoid robotic or overly formal language* Vary sentence structure and length to sound more human* Use contractions and casual phrasing when it makes sense* Match the emotional tone and urgency of the original message* End naturally — no need for generic closings* Keep the **original greeter** and always **sign off as “Abdullah, Neswave Support”**---**ABSOLUTELY AVOID THESE PHRASES:**> * “Feel free to...”> * “Don’t hesitate to...”> * “Happy to help”> * “Please let us know”> * “We’re here to help”> * “Thank you for your patience”> * “We appreciate your understanding”> * “Looking forward to hearing from you”---**DELIVERABLE:**Only output the final rewritten email — no explanation or commentary."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        2160,
+        48
+      ],
+      "id": "d4f31db6-f475-428f-a0be-60606190b5ae",
+      "name": "Humanize email body2"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\",\n      \"enum\": [\"support_request\", \"feature_inquiry\", \"billing_question\", \"technical_issue\", \"general_inquiry\", \"escalation_needed\"],\n      \"description\": \"The category of the email\"\n    },\n    \"priority\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"urgent\"],\n      \"description\": \"Priority level of the request\"\n    },\n    \"sentiment\": {\n      \"type\": \"string\",\n      \"enum\": [\"positive\", \"neutral\", \"negative\", \"frustrated\"],\n      \"description\": \"Customer sentiment\"\n    },\n    \"keyTopics\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Key topics or issues mentioned\"\n    },\n    \"needsKnowledgeBase\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether this requires knowledge base lookup\"\n    },\n    \"summary\": {\n      \"type\": \"string\",\n      \"description\": \"Brief summary of the customer's request\"\n    }\n  },\n  \"required\": [\"category\", \"priority\", \"sentiment\", \"keyTopics\", \"needsKnowledgeBase\", \"summary\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -80,
+        1296
+      ],
+      "id": "f68974e0-1f80-43a3-b0cb-3df222f100b8",
+      "name": "Email Classifier Parser1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following customer email and classify it:\n\nEmail:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nemail subject:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nPrevious Context:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\nCRM Notes:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}\n\nClassify this email by category, priority, sentiment, and identify key topics. Determine if knowledge base lookup is needed.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an email classification specialist for Neswave customer support. Your job is to quickly analyze incoming emails and categorize them for proper routing.\n\nCategories:\n- support_request: Customer needs help with existing service\n- feature_inquiry: Questions about features/capabilities\n- billing_question: Payment, pricing, or billing issues\n- technical_issue: Bug reports or technical problems\n- general_inquiry: General questions about services\n- escalation_needed: Complex issues requiring human intervention\n\nPriority Levels:\n- urgent: Service down, critical business impact\n- high: Important issue affecting business operations\n- medium: Standard support request\n- low: General questions, non-urgent\n\nSentiment:\n- positive: Happy, satisfied customer\n- neutral: Standard business communication\n- negative: Unhappy but not hostile\n- frustrated: Angry or very dissatisfied\n\nAnalyze the email content, context, and CRM notes to provide accurate classification."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -240,
+        1104
+      ],
+      "id": "14fd6fdb-dec1-4af7-97de-cb72fae207b5",
+      "name": "Email Classifier Agent1"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "neswave information",
+          "mode": "list",
+          "cachedResultName": "neswave information"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        1648
+      ],
+      "id": "ef2e9bf6-a735-42c6-8992-e3b18cf0a538",
+      "name": "Knowledge Vector Store1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Retrieve relevant information from Neswave knowledge base",
+        "topK": 5
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        1504
+      ],
+      "id": "659289cb-289a-4818-97ee-874b024dbe7c",
+      "name": "Knowledge Retrieval Tool1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the classified email, search for relevant information:\n\nEmail Category: {{ $json.output.category }}\nKey Topics:{{ $json.output.keyTopics[0] }} \nCustomer Summary:{{ $('When Executed by Another Workflow').item.json.thread_context }}\nemail subject:{{ $('When Executed by Another Workflow').item.json.subject }}\nemail_body:{{ $('When Executed by Another Workflow').item.json.email_body }}\n\nFind the most relevant information to help answer this customer's question or resolve their issue.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are a knowledge retrieval and product recommendation specialist for Nesroi customer support and sales. Your job is to find the most relevant information from the knowledge base to resolve customer issues and recommend products based on upsell (more premium options), downsell (affordable alternatives), and cross-sell (complementary items) from the product database.\n\nStrategy:\n1. Use the classified email information to construct targeted searches for solutions and products\n2. Look for specific solutions, troubleshooting steps, or product information\n3. Suggest upsell opportunities with higher-value products\n4. Identify downsell options for budget-conscious alternatives\n5. Suggest cross-sell items that complement the current selection\n6. Prioritize recent, accurate, and relevant information and products\n7. Rate your confidence in the retrieved information and recommendations\n\nReturn the most relevant information found, recommended products categorized by upsell, downsell, and cross-sell, your confidence level, sources, and whether additional searches are needed."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        416,
+        1104
+      ],
+      "id": "574fd2b0-d8a3-47ba-98cd-9fabd8f69122",
+      "name": "Knowledge Retrieval Agent1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "direct-response",
+              "name": "directResponse",
+              "value": "={\n  \"emailBody\": $('response-generator-agent').item.json.emailBody,\n  \"escalate\": false,\n  \"reason\": \"Standard response - no knowledge base needed\",\n  \"classification\": $('email-classifier-agent').item.json,\n  \"responseTime\": $now\n}\n",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        752
+      ],
+      "id": "e6cf9ba9-1a97-41a2-a0b0-237119504a32",
+      "name": "Direct Response1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3d8f6e7b-2431-4d96-8c97-b7eba50e0720",
+              "leftValue": "={{ $json.output.needsKnowledgeBase }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        112,
+        1120
+      ],
+      "id": "17aae3dc-9c45-4d5c-bc1c-7d4fe210563a",
+      "name": "need knowledge base1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        480,
+        1808
+      ],
+      "id": "1f7caba5-11d5-45c8-bef6-2ced05593a9f",
+      "name": "Embeddings Mistral Cloud",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "0nx7dAnMpj5n4Kw8",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "n8n to supabase",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "hubspot_crm_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"hubspot_id\"] }}"
+            },
+            {
+              "fieldId": "thread_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_id\"] }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_address\"] }}"
+            },
+            {
+              "fieldId": "permission",
+              "fieldValue": "Waiting"
+            },
+            {
+              "fieldId": "escalation",
+              "fieldValue": "={{ $('Response Generator Agent').item.json.output.escalationNeeded }}"
+            },
+            {
+              "fieldId": "important",
+              "fieldValue": "False"
+            },
+            {
+              "fieldId": "bookcall",
+              "fieldValue": "False"
+            },
+            {
+              "fieldId": "edited",
+              "fieldValue": "0"
+            },
+            {
+              "fieldId": "CRM_notes",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}"
+            },
+            {
+              "fieldId": "Previous_Emails_Summary",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}"
+            },
+            {
+              "fieldId": "Customer_Email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}"
+            },
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "False"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"customer_name\"] }}"
+            },
+            {
+              "fieldId": "draft_reply",
+              "fieldValue": "={{ $json.text }}"
+            },
+            {
+              "fieldId": "thought_process",
+              "fieldValue": "={{ $('Response Generator Agent').item.json.output.reason }}"
+            },
+            {
+              "fieldId": "removed",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "Escalated_replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "email_subject",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        1440
+      ],
+      "id": "d3ff7846-4c53-471b-8229-9272741dec6d",
+      "name": "Create a row3",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3-32b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        1376
+      ],
+      "id": "bd7912b5-c3fe-413c-87cd-e8c02419f2e7",
+      "name": "Groq Chat Model2",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistral-large-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        1616
+      ],
+      "id": "a71da87e-9acd-40fc-babe-7cfce5b0e785",
+      "name": "Mistral Cloud Chat Model3",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "0nx7dAnMpj5n4Kw8",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "n8n to supabase",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "hubspot_crm_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"hubspot_id\"] }}"
+            },
+            {
+              "fieldId": "thread_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_id\"] }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_address\"] }}"
+            },
+            {
+              "fieldId": "permission",
+              "fieldValue": "=Waiting"
+            },
+            {
+              "fieldId": "important",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "bookcall",
+              "fieldValue": "={{ $('When Executed by Another Workflow').item.json.bookcall }}"
+            },
+            {
+              "fieldId": "edited",
+              "fieldValue": "=0"
+            },
+            {
+              "fieldId": "CRM_notes",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}"
+            },
+            {
+              "fieldId": "Previous_Emails_Summary",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}"
+            },
+            {
+              "fieldId": "Customer_Email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}"
+            },
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $('Email Analysis Agent').item.json.output.requesterName }}"
+            },
+            {
+              "fieldId": "email_subject",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}"
+            },
+            {
+              "fieldId": "replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "draft_reply",
+              "fieldValue": "={{ $json.text }}"
+            },
+            {
+              "fieldId": "bookcall",
+              "fieldValue": "={{ $('Response Generator Agent1').item.json.output.isConfirmingBooking }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2592,
+        80
+      ],
+      "id": "33c6995d-d9ca-4145-80e5-ef8158ee7d4b",
+      "name": "Create a row5",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "email_address"
+            },
+            {
+              "name": "subject"
+            },
+            {
+              "name": "email_body"
+            },
+            {
+              "name": "greeter"
+            },
+            {
+              "name": "thread_context"
+            },
+            {
+              "name": "thread_id"
+            },
+            {
+              "name": "hubspot_id"
+            },
+            {
+              "name": "crm_note"
+            },
+            {
+              "name": "customer_name"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -1488,
+        528
+      ],
+      "id": "9d139349-4220-453f-b941-f858cbfc54e7",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "tableId": "n8n to supabase",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "hubspot_crm_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"hubspot_id\"] }}"
+            },
+            {
+              "fieldId": "thread_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_id\"] }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_address\"] }}"
+            },
+            {
+              "fieldId": "permission",
+              "fieldValue": "Waiting"
+            },
+            {
+              "fieldId": "escalation",
+              "fieldValue": "={{ $('Response Generator Agent').item.json.output.escalationNeeded }}"
+            },
+            {
+              "fieldId": "important",
+              "fieldValue": "False"
+            },
+            {
+              "fieldId": "bookcall",
+              "fieldValue": "False"
+            },
+            {
+              "fieldId": "edited",
+              "fieldValue": "0"
+            },
+            {
+              "fieldId": "CRM_notes",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}"
+            },
+            {
+              "fieldId": "Previous_Emails_Summary",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}"
+            },
+            {
+              "fieldId": "Customer_Email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}"
+            },
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "False"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"customer_name\"] }}"
+            },
+            {
+              "fieldId": "draft_reply",
+              "fieldValue": "={{ $json.text }}"
+            },
+            {
+              "fieldId": "thought_process",
+              "fieldValue": "={{ $('Response Generator Agent').item.json.output.reason }}"
+            },
+            {
+              "fieldId": "removed",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "Escalated_replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "email_subject",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        2432,
+        1248
+      ],
+      "id": "cdebe9ef-1f8c-4fcf-aba8-1651d413a4d0",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"relevantInfo\":{\"type\":\"string\",\"description\":\"Relevant information found in knowledge base\"},\"recommendedProducts\":{\"type\":\"object\",\"properties\":{\"upsell\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"List of upsell product recommendations\"},\"downsell\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"List of downsell product recommendations\"},\"crossSell\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"List of cross-sell product recommendations\"}},\"required\":[\"upsell\",\"downsell\",\"crossSell\"],\"additionalProperties\":false},\"confidence\":{\"type\":\"number\",\"minimum\":0,\"maximum\":1,\"description\":\"Confidence level in the retrieved information and recommendations\"},\"sources\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"description\":\"Sources of the information and recommendations\"},\"additionalSearchNeeded\":{\"type\":\"boolean\",\"description\":\"Whether additional search is needed\"}},\"required\":[\"relevantInfo\",\"recommendedProducts\",\"confidence\",\"sources\",\"additionalSearchNeeded\"],\"additionalProperties\":false}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        640,
+        1264
+      ],
+      "id": "fbbd5e94-8185-4c1c-8b44-bdac912a1995",
+      "name": "Knowledge and Product Parser"
+    },
+    {
+      "parameters": {
+        "text": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Prompt__User_Message_', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agentTool",
+      "typeVersion": 2.2,
+      "position": [
+        624,
+        208
+      ],
+      "id": "dce58031-4577-46db-924d-ed032fb93b97",
+      "name": "AI Agent Tool"
+    }
+  ],
+  "connections": {
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Switch1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model10": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Humanize email body2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Control LLM1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Quality Control Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Control Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Quality Control Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Control Agent1": {
+      "main": [
+        [
+          {
+            "node": "Humanize email body1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model11": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Humanize email body1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Humanize email body1": {
+      "main": [
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Response Generator Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Generator Agent": {
+      "main": [
+        [
+          {
+            "node": "Quality Control Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "Response Generator Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model13": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Analysis Agent": {
+      "main": [
+        [
+          {
+            "node": "Calendar Query Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Query Agent": {
+      "main": [
+        [
+          {
+            "node": "Response Generator Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Analysis Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Email Analysis Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calendar Query Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Calendar Query Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent Tool",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Generator Agent1": {
+      "main": [
+        [
+          {
+            "node": "Humanize email body2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Response Generator Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Analysis Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Calendar Query Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "AI Agent Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch1": {
+      "main": [
+        [
+          {
+            "node": "Email Analysis Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Classifier Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Humanize email body2": {
+      "main": [
+        [
+          {
+            "node": "Create a row5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Classifier Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Email Classifier Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Classifier Agent1": {
+      "main": [
+        [
+          {
+            "node": "need knowledge base1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Vector Store1": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Knowledge Retrieval Tool1",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Retrieval Tool1": {
+      "ai_tool": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Retrieval Agent1": {
+      "main": [
+        [
+          {
+            "node": "Response Generator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Direct Response1": {
+      "main": [
+        [
+          {
+            "node": "Response Generator Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "need knowledge base1": {
+      "main": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Direct Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Knowledge Vector Store1",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Classifier Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Response Generator Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Response Generator Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Knowledge Retrieval Tool1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge and Product Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Calendar Query Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "output": {
+          "category": "Sales"
+        },
+        "email_address": "blackalex00268@gmail.com",
+        "subject": "Request for Demo of Your AI Workflow Solutions",
+        "email_body": "My company is looking to implement AI-driven automation for our HR processes, and your services caught our attention. Do you provide solutions for automating employee onboarding and data management? If so, we’d love to schedule a demo to see your platform in action. i want book call in  09:00–09:30 AM Dhaka time.  13 september. Thanks",
+        "greeter": "Good evening, Abdullah,",
+        "crm_note": "Note#1:\n2025-09-10T01:20:15.678Z\nbye bye\n\nNote#2:\n2025-09-10T01:20:05.748Z\nhlw\n\nNote#3:\n2025-09-10T01:14:58.035Z\nprintf(\"\");",
+        "hubspot_id": "132960945553",
+        "thread_id": "199344256b8c2e69",
+        "thread_context": "no previous summary of email thread",
+        "customer_name": "abdullah"
+      }
+    ]
+  },
+  "meta": {
+    "instanceId": "6baf55fe0ef77c33d6fa749473787d2579a5b07f1458cc63604927053b912082"
+  }
+}
