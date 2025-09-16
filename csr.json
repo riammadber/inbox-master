@@ -1,0 +1,1172 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8c816866-eec9-4c02-a7df-e37a4c1fc89f",
+              "leftValue": "={{ $('Escalation Decision Agent').item.json.output.escalationNeeded }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1488,
+        48
+      ],
+      "id": "a19e1d99-edd0-412f-b7e5-e5a6cda0f963",
+      "name": "Escalate?"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        416,
+        272
+      ],
+      "id": "a0865471-ff81-41c1-8ebc-7b7931015dc8",
+      "name": "Quality Control LLM",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"finalEmailBody\": {\n      \"type\": \"string\",\n      \"description\": \"The final, reviewed email response\"\n    },\n    \"qualityScore\": {\n      \"type\": \"number\",\n      \"minimum\": 1,\n      \"maximum\": 10,\n      \"description\": \"Quality score of the response (1-10)\"\n    },\n    \"improvements\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Improvements made to the original response\"\n    },\n    \"escalate\": {\n      \"type\": \"boolean\",\n      \"description\": \"Final decision on escalation\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Reasoning for the final decision\"\n    },\n    \"tags\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Tags for categorization and tracking\"\n    }\n  },\n  \"required\": [\"finalEmailBody\", \"qualityScore\", \"improvements\", \"escalate\", \"reason\", \"tags\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        576,
+        240
+      ],
+      "id": "eb981c57-bab7-4c3d-89b6-5c32f84eb97e",
+      "name": "Quality Control Parser"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        960,
+        224
+      ],
+      "id": "9469233c-647f-44cd-a30b-db3870e96b63",
+      "name": "Google Gemini Chat Model9",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output.finalEmailBody }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "---|You’re rewriting automated customer support emails to sound like they came from a real person on the team — not a bot or a template.---**YOUR GOAL:**Make the email sound like something a helpful colleague would write. It should feel casual, warm, and human — while still being clear and professional.---**STYLE RULES:*** Use a natural, conversational tone (like explaining to a friend or coworker)* Avoid robotic or overly formal language* Vary sentence structure and length to sound more human* Use contractions and casual phrasing when it makes sense* Match the emotional tone and urgency of the original message* End naturally — no need for generic closings* Keep the **original greeter** and always **sign off as “Abdullah, Neswave Support”**---**ABSOLUTELY AVOID THESE PHRASES:**> * “Feel free to...”> * “Don’t hesitate to...”> * “Happy to help”> * “Please let us know”> * “We’re here to help”> * “Thank you for your patience”> * “We appreciate your understanding”> * “Looking forward to hearing from you”---**DELIVERABLE:**Only output the final rewritten email — no explanation or commentary."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        976,
+        0
+      ],
+      "id": "82aa9352-b81a-43da-8f12-38e4c9f2e8e9",
+      "name": "Humanize email body"
+    },
+    {
+      "parameters": {
+        "tableName": {
+          "__rl": true,
+          "value": "neswave information",
+          "mode": "list",
+          "cachedResultName": "neswave information"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.1,
+      "position": [
+        -1280,
+        736
+      ],
+      "id": "9e1abdb8-cc62-4b08-8802-a8df637f044b",
+      "name": "Knowledge Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Retrieve relevant information from Neswave knowledge base",
+        "topK": 5
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolVectorStore",
+      "typeVersion": 1.1,
+      "position": [
+        -1136,
+        576
+      ],
+      "id": "2ab0edf7-e073-40a3-8257-b2ee51c139e4",
+      "name": "Knowledge Retrieval Tool"
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"relevantInfo\": {\n      \"type\": \"string\",\n      \"description\": \"Relevant information found in knowledge base\"\n    },\n    \"confidence\": {\n      \"type\": \"number\",\n      \"minimum\": 0,\n      \"maximum\": 1,\n      \"description\": \"Confidence level in the retrieved information\"\n    },\n    \"sources\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Sources of the information\"\n    },\n    \"additionalSearchNeeded\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether additional search is needed\"\n    }\n  },\n  \"required\": [\"relevantInfo\", \"confidence\", \"sources\", \"additionalSearchNeeded\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -1056,
+        384
+      ],
+      "id": "9a829ca7-3b80-4508-a666-a5997984ca51",
+      "name": "Knowledge Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Based on the classified email, search for relevant information:\n\nEmail Category: {{ $('Email Classifier Agent').item.json.output.category }}\nKey Topics: {{ $('Email Classifier Agent').item.json.output.keyTopics[0] }},\n{{ $('Email Classifier Agent').item.json.output.keyTopics[1] }},\n{{ $('Email Classifier Agent').item.json.output.keyTopics[2] }},\n{{ $('Email Classifier Agent').item.json.output.keyTopics[3] }}\n\nCustomer Summary: {{ $('Email Classifier Agent').item.json.output.summary }}\nPriority:{{ $('Email Classifier Agent').item.json.output.priority }}\n\nFind the most relevant information to help answer this customer's question or resolve their issue.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are a knowledge retrieval specialist for Neswave customer support. Your job is to find the most relevant information from the knowledge base to help resolve customer issues.\n\nSearch Strategy:\n1. Use the classified email information to construct targeted searches\n2. Look for specific solutions, troubleshooting steps, or product information\n3. Prioritize recent and accurate information\n4. Identify if the retrieved information is sufficient or if additional searches are needed\n5. Rate your confidence in the retrieved information\n\nReturn the most relevant information found, your confidence level, sources, and whether additional searches are needed."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.9,
+      "position": [
+        -1280,
+        176
+      ],
+      "id": "57f78f93-9af2-46f6-baf2-eee2a14699ca",
+      "name": "Knowledge Retrieval Agent"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "direct-response",
+              "name": "directResponse",
+              "value": "={\n  \"emailBody\": $('response-generator-agent').item.json.emailBody,\n  \"escalate\": false,\n  \"reason\": \"Standard response - no knowledge base needed\",\n  \"classification\": $('email-classifier-agent').item.json,\n  \"responseTime\": $now\n}\n",
+              "type": "object"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1216,
+        16
+      ],
+      "id": "2c539558-a353-4494-976d-d424c30111e2",
+      "name": "Direct Response"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "3d8f6e7b-2431-4d96-8c97-b7eba50e0720",
+              "leftValue": "={{ $item(\"0\").$node[\"Knowledge Base Checker Agent\"].json[\"output\"][\"needsKnowledgeBase\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1568,
+        16
+      ],
+      "id": "c37a7b0f-56d2-4623-aa41-df8f80b9d081",
+      "name": "need knowledge base"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -1296,
+        928
+      ],
+      "id": "d46fe16b-3f20-4f2b-8f94-cfa629f5f0dc",
+      "name": "Embeddings Mistral Cloud1",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "0nx7dAnMpj5n4Kw8",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1264,
+        400
+      ],
+      "id": "15ed91ce-abe8-43b8-a97e-2ec9fa7322ef",
+      "name": "Google Gemini Chat Model6",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "XgxClWIhVpsGMByy",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"category\": {\n      \"type\": \"string\",\n      \"enum\": [\"support_request\", \"feature_inquiry\", \"billing_question\", \"technical_issue\", \"general_inquiry\", \"escalation_needed\"],\n      \"description\": \"The category of the email\"\n    },\n    \"priority\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\", \"urgent\"],\n      \"description\": \"Priority level of the request\"\n    },\n    \"sentiment\": {\n      \"type\": \"string\",\n      \"enum\": [\"positive\", \"neutral\", \"negative\", \"frustrated\"],\n      \"description\": \"Customer sentiment\"\n    },\n    \"keyTopics\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Key topics or issues mentioned\"\n    },\n    \"summary\": {\n      \"type\": \"string\",\n      \"description\": \"Brief summary of the customer's request\"\n    }\n  },\n  \"required\": [\"category\", \"priority\", \"sentiment\", \"keyTopics\", \"summary\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -2352,
+        176
+      ],
+      "id": "d5e4e8bd-a508-415e-9d6e-877dcabcc6dc",
+      "name": "Email Classifier Parser"
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -2496,
+        192
+      ],
+      "id": "afa0f1db-9512-4494-8f7e-c6e8a2ecff33",
+      "name": "Groq Chat Model - Classifier",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"needsKnowledgeBase\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether this requires knowledge base lookup\"\n    },\n    \"reasoning\": {\n      \"type\": \"string\",\n      \"description\": \"Detailed explanation of why knowledge base lookup is or isn't needed\"\n    },\n    \"emailType\": {\n      \"type\": \"string\",\n      \"enum\": [\"technical_question\", \"how_to_request\", \"error_message\", \"product_capability\", \"procedural_info\", \"billing_issue\", \"general_complaint\", \"account_change\", \"scheduling\", \"basic_service\", \"order_issue\"],\n      \"description\": \"Type of email that influenced the decision\"\n    }\n  },\n  \"required\": [\"needsKnowledgeBase\", \"reasoning\", \"emailType\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -1904,
+        160
+      ],
+      "id": "885f9704-7797-4905-979c-b1fadf25d176",
+      "name": "Knowledge Base Checker Parser1"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-120b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -2080,
+        144
+      ],
+      "id": "6418ed59-c16d-4e9b-aabd-696fb9f6f404",
+      "name": "Groq Chat Model - KB1",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"escalationNeeded\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether this needs escalation to human agent\"\n    },\n    \"reason\": {\n      \"type\": \"string\",\n      \"description\": \"Reasoning for the escalation decision\"\n    },\n    \"informationSufficiency\": {\n      \"type\": \"string\",\n      \"enum\": [\"sufficient\", \"insufficient\", \"partial\"],\n      \"description\": \"Assessment of available information\"\n    },\n    \"complexityLevel\": {\n      \"type\": \"string\",\n      \"enum\": [\"low\", \"medium\", \"high\"],\n      \"description\": \"Complexity level of the customer issue\"\n    }\n  },\n  \"required\": [\"escalationNeeded\", \"reason\", \"informationSufficiency\", \"complexityLevel\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        -672,
+        224
+      ],
+      "id": "9e2064a6-11fc-454d-906d-3c3e54c1fbe8",
+      "name": "Escalation Decision Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following customer support case to determine if escalation is needed:\nGenerate a customer support response based on:\n\nEmail subject:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nemail body:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}\nClassification:---\ncategory={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"category\"] }}\npriority={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"priority\"] }}\nsentiment={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"sentiment\"] }}\nkeytopics={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"keyTopics\"] }}\nsummary={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"summary\"] }}\nKnowledge Base Info:{{ $json.output.relevantInfo }}\nCRM Notes:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }} \nPrevious Context: {{ $('When Executed by Another Workflow').item.json.threadSummary || \"no previous thread summary\" }}\n\n\nCreate an appropriate response that addresses the customer's needs.\n\n\n\nDetermine if this case requires human escalation based on information sufficiency and complexity.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an escalation decision specialist for Nesroi customer support. Your role is to analyze customer support cases and determine if they require human agent escalation.\n\nEscalation Criteria:\n1. **Information Insufficient**: When critical details are missing to resolve the issue\n2. **High Complexity**: Technical issues beyond standard troubleshooting\n3. **Legal/Compliance**: Issues involving legal matters, refunds, or policy disputes\n4. **Angry/Frustrated Customers**: High emotion cases requiring human empathy\n5. **Security Concerns**: Account security, data breaches, or suspicious activity\n6. **Custom Solutions**: Requests requiring custom development or special arrangements\n\nDo NOT escalate for:\n- Standard FAQ questions with clear answers\n- Simple technical issues with known solutions\n- Routine account updates or information requests\n- General product inquiries\n\nProvide clear reasoning for your decision focusing on information sufficiency and issue complexity."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -816,
+        32
+      ],
+      "id": "373fe572-92ff-4347-873a-10867fc40508",
+      "name": "Escalation Decision Agent"
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -848,
+        256
+      ],
+      "id": "f15571c1-7751-40bd-957e-f520646d7154",
+      "name": "Escalation Groq Model",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"emailBody\": {\n      \"type\": \"string\",\n      \"description\": \"The draft email response body\"\n    },\n    \"tone\": {\n      \"type\": \"string\",\n      \"enum\": [\"professional\", \"friendly\", \"empathetic\", \"urgent\"],\n      \"description\": \"Tone used in the response\"\n    },\n    \"actionItems\": {\n      \"type\": \"array\",\n      \"items\": {\"type\": \"string\"},\n      \"description\": \"Action items or next steps mentioned\"\n    },\n    \"followUpRequired\": {\n      \"type\": \"boolean\",\n      \"description\": \"Whether follow-up is required\"\n    },\n    \"responseType\": {\n      \"type\": \"string\",\n      \"enum\": [\"solution\", \"escalation_notice\", \"information_request\", \"acknowledgment\"],\n      \"description\": \"Type of response being generated\"\n    }\n  },\n  \"required\": [\"emailBody\", \"tone\", \"actionItems\", \"followUpRequired\", \"responseType\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.2,
+      "position": [
+        160,
+        240
+      ],
+      "id": "85d874bc-9df8-474d-a803-885a42588f92",
+      "name": "Response Generation Parser"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a customer support response based on:\n\nGenerate a customer support response based on:\n\nOriginal Email:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}\nClassification-----\ncategory={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"category\"] }}\npriority={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"priority\"] }}\nsentiment={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"sentiment\"] }}\nkeytopics={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"keyTopics\"] }}\nsummary={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"summary\"] }}\nKnowledge Base Info:{{ $json.output.relevantInfo || \"N/A\"}} \nCRM Notes:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}\nPrevious Context: {{ $('When Executed by Another Workflow').item.json.threadSummary || \"no previous thread summary\" }}\nuse greeter:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"greeter\"] }}\nCreate an appropriate response that addresses the customer's needs.\n\n\nCreate an appropriate response addressing the customer's needs.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are a response generation specialist for Neswave customer support. Your job is to create appropriate email responses based on classified customer emails and escalation decisions.\n\nResponse Guidelines:\n1. **Match tone to customer sentiment and priority level**\n2. **Address all key topics identified in classification**\n3. **Use retrieved knowledge base information when available**\n4. **Provide clear next steps or solutions**\n5. **Maintain Neswave's friendly, professional brand voice**\n6. **Sign off as \"Abdullah, Neswave Support\"**\n7. **Use the provided greeter appropriately**\n\nTone Guidelines:\n- **Frustrated customers**: Empathetic and solution-focused\n- **Technical issues**: Professional and detailed\n- **General inquiries**: Friendly and informative\n- **Urgent issues**: Prompt and action-oriented\n\nResponse Types:\n- **If escalation NOT needed**: Provide direct solution or detailed answer\n- **If escalation IS needed**: Create acknowledgment response indicating the case will be reviewed by a specialist, provide timeline, and include any immediate helpful information\n\nAlways aim to be helpful and maintain customer satisfaction regardless of whether the case is escalated."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "7fcb8716-59b5-4ddb-894e-29ea041b1838",
+      "name": "Response Generation Agent"
+    },
+    {
+      "parameters": {
+        "model": "moonshotai/kimi-k2-instruct",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -80,
+        240
+      ],
+      "id": "bdbb7493-8dfc-4e68-872d-713af9edabc2",
+      "name": "Response Groq Model",
+      "credentials": {
+        "groqApi": {
+          "id": "JGoOWb8zvtM4TJ0Q",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "mistral-large-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatMistralCloud",
+      "typeVersion": 1,
+      "position": [
+        -816,
+        800
+      ],
+      "id": "fec0453a-33a8-484f-b767-b5264b266268",
+      "name": "Mistral Cloud Chat Model2",
+      "credentials": {
+        "mistralCloudApi": {
+          "id": "0nx7dAnMpj5n4Kw8",
+          "name": "Mistral Cloud account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "tableId": "n8n to supabase",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "hubspot_crm_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}"
+            },
+            {
+              "fieldId": "thread_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_id\"] }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_address\"] }}\n"
+            },
+            {
+              "fieldId": "permission",
+              "fieldValue": "=Waiting"
+            },
+            {
+              "fieldId": "escalation",
+              "fieldValue": "={{ $('Escalation Decision Agent').item.json.output.escalationNeeded }}"
+            },
+            {
+              "fieldId": "important",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "bookcall",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "edited",
+              "fieldValue": "=0"
+            },
+            {
+              "fieldId": "CRM_notes",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}"
+            },
+            {
+              "fieldId": "Previous_Emails_Summary",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}"
+            },
+            {
+              "fieldId": "Customer_Email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}"
+            },
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"customer_name\"] }}"
+            },
+            {
+              "fieldId": "replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "email_subject",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}"
+            },
+            {
+              "fieldId": "thought_process",
+              "fieldValue": "={{ $('Escalation Decision Agent').item.json.output.reason }}"
+            },
+            {
+              "fieldId": "draft_reply",
+              "fieldValue": "={{ $('Humanize email body').item.json.text }}"
+            },
+            {
+              "fieldId": "removed",
+              "fieldValue": "FALSE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1968,
+        192
+      ],
+      "id": "5bd5e935-5901-42f6-974f-edc6ef9efb59",
+      "name": "Create a row1",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "email_address"
+            },
+            {
+              "name": "email_body"
+            },
+            {
+              "name": "thread_id"
+            },
+            {
+              "name": "hubspot_id"
+            },
+            {
+              "name": "subject"
+            },
+            {
+              "name": "greeter"
+            },
+            {
+              "name": "crm_note"
+            },
+            {
+              "name": "thread_context"
+            },
+            {
+              "name": "customer_name"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -2752,
+        0
+      ],
+      "id": "e5a1e500-185e-4af8-b488-f4bf25e7711c",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze the following customer email and determine if it requires knowledge base lookup:\n\nEmail subject:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nemail body:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}\nPrevious Context:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\nCRM Notes:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}\nDetermine if this email requires searching through knowledge base articles, documentation, or FAQs to provide an accurate response. Provide detailed reasoning for your decision.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are a knowledge base routing specialist. Your job is to determine if a customer email requires looking up information from knowledge base articles, documentation, or FAQs, and explain your reasoning.  **NEEDS KNOWLEDGE BASE (true) when email:** - Asks specific technical questions about features or functionality - Requests step-by-step how-to instructions or tutorials - References error messages or technical issues that need troubleshooting - Asks about specific product capabilities, limitations, or compatibility - Needs detailed procedural information or complex processes - Requires product specifications or technical details  **DOES NOT NEED KNOWLEDGE BASE (false) when email:** - Is a simple order issue (wrong item, delivery problems, returns) - Is a billing question with account-specific information - Is general complaint or feedback without technical aspects - Requests account changes, updates, or cancellations - Is scheduling-related (demos, calls, appointments) - Can be resolved with basic customer service actions - Is a straightforward refund or exchange request  **Your response must include:** 1. needsKnowledgeBase: boolean decision 2. reasoning: Detailed explanation of why you made this decision, referencing specific aspects of the email 3. emailType: Category that best describes the email type  Analyze the email content carefully and provide clear reasoning for your determination."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -2064,
+        -16
+      ],
+      "id": "cb2db3fc-a430-48ea-b58e-e2545e3694fb",
+      "name": "Knowledge Base Checker Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyze and classify the following customer email:\n\nEmail subject:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}\nemail body:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}\nPrevious Context:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\nCRM Notes:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}\n\nClassify this email by category, priority, sentiment, key topics, and provide a summary.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are an email classification specialist for Neswave customer support. Your job is to analyze incoming emails and categorize them for proper routing.  Categories: - support_request: Customer needs help with existing service - feature_inquiry: Questions about features/capabilities - billing_question: Payment, pricing, or billing issues - technical_issue: Bug reports or technical problems - general_inquiry: General questions about services - escalation_needed: Complex issues requiring human intervention  Priority Levels: - urgent: Service down, critical business impact - high: Important issue affecting business operations - medium: Standard support request - low: General questions, non-urgent  Sentiment: - positive: Happy, satisfied customer - neutral: Standard business communication - negative: Unhappy but not hostile - frustrated: Angry or very dissatisfied  Analyze the email content, context, and CRM notes to provide accurate classification. Focus on categorization, prioritization, sentiment analysis, topic extraction, and summarization."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -2496,
+        -64
+      ],
+      "id": "176b5ecd-9c8c-4555-baf5-516106d1cb37",
+      "name": "Email Classifier Agent"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Review and finalize the customer support response:\n\nprevious email:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}\nOriginal Email:{{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}\nClassification:category={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"category\"] }}\npriority={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"priority\"] }}\nsentiment={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"sentiment\"] }}\nkeytopics={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"keyTopics\"] }}\nsummary={{ $item(\"0\").$node[\"Email Classifier Agent\"].json[\"output\"][\"summary\"] }}\nDraft Response: {{ $json.output.emailBody }}\nResponse Metadata:{{ $json.output.tone }}\nReview for quality, accuracy, tone, and completeness. Make final improvements.",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are the quality control specialist for Neswave customer support. Your job is to review and finalize customer support responses before they are sent.\n\nIMPORTANT: Do NOT generate or suggest an email subject line unless explicitly instructed.\n\nQuality Checklist:\n1. Accuracy: Is the information correct and helpful?\n2. Completeness: Does it address all customer concerns?\n3. Tone: Is the tone appropriate for the situation?\n4. Clarity: Is the response clear and easy to understand?\n5. Branding: Does it maintain Neswave's voice and standards?\n6. Grammar: Is it well-written and professional?\n7. Action Items: Are next steps clear?\n8. Escalation: Is the escalation decision appropriate?\n\nYour responsibilities:\n- Fix any inaccuracies or unclear statements\n- Adjust tone if needed\n- Add missing information\n- Improve clarity and structure\n- Ensure proper sign-off (\"Abdullah, Neswave Support\")\n- Provide a quality score from 1 to 10\n- List specific improvements made\n- Make a final decision on whether to escalate to a human agent\n- Keep the **original greeter** and always **sign off as “Abdullah, Neswave Support”\n\nAgain: Do NOT generate or include an email subject line unless explicitly told to do so.\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        432,
+        -16
+      ],
+      "id": "a5a7c37d-1d98-4437-8f88-874a4895dadc",
+      "name": "Quality Control Agent"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "8f333bde-8338-4e3b-ac72-8deccebc5040",
+              "leftValue": "={{ $item(\"0\").$node[\"Escalation Decision Agent\"].json[\"output\"][\"escalationNeeded\"] }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -368,
+        16
+      ],
+      "id": "ded46b49-0935-490a-aa26-7b6802cd751c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "tableId": "n8n to supabase",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "hubspot_crm_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}"
+            },
+            {
+              "fieldId": "thread_id",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_id\"] }}"
+            },
+            {
+              "fieldId": "email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_address\"] }}\n"
+            },
+            {
+              "fieldId": "permission",
+              "fieldValue": "=Waiting"
+            },
+            {
+              "fieldId": "escalation",
+              "fieldValue": "={{ $('Escalation Decision Agent').item.json.output.escalationNeeded }}"
+            },
+            {
+              "fieldId": "important",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "bookcall",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "edited",
+              "fieldValue": "=0"
+            },
+            {
+              "fieldId": "CRM_notes",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"crm_note\"] }}"
+            },
+            {
+              "fieldId": "Previous_Emails_Summary",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"thread_context\"] }}"
+            },
+            {
+              "fieldId": "Customer_Email",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"email_body\"] }}"
+            },
+            {
+              "fieldId": "message_sent",
+              "fieldValue": "=False"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"customer_name\"] }}"
+            },
+            {
+              "fieldId": "replied",
+              "fieldValue": "FALSE"
+            },
+            {
+              "fieldId": "email_subject",
+              "fieldValue": "={{ $item(\"0\").$node[\"When Executed by Another Workflow\"].json[\"subject\"] }}"
+            },
+            {
+              "fieldId": "thought_process",
+              "fieldValue": "={{ $('Escalation Decision Agent').item.json.output.reason }}"
+            },
+            {
+              "fieldId": "removed",
+              "fieldValue": "FALSE"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        -48
+      ],
+      "id": "244cd907-4642-4cda-bb93-baa2e7807e69",
+      "name": "Create a row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "rakv3AmMkRmiM0vh",
+          "name": "Supabase account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Escalate?": {
+      "main": [
+        [
+          {
+            "node": "Create a row",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a row1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Control LLM": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Quality Control Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Control Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Quality Control Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model9": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Humanize email body",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Humanize email body": {
+      "main": [
+        [
+          {
+            "node": "Escalate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Vector Store": {
+      "ai_vectorStore": [
+        [
+          {
+            "node": "Knowledge Retrieval Tool",
+            "type": "ai_vectorStore",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Retrieval Tool": {
+      "ai_tool": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Retrieval Agent": {
+      "main": [
+        [
+          {
+            "node": "Escalation Decision Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Direct Response": {
+      "main": [
+        [
+          {
+            "node": "Escalation Decision Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "need knowledge base": {
+      "main": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Direct Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Mistral Cloud1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Knowledge Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model6": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Knowledge Retrieval Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Classifier Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Email Classifier Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model - Classifier": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Classifier Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Base Checker Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Knowledge Base Checker Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model - KB1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Knowledge Base Checker Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Decision Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Escalation Decision Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Decision Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Escalation Groq Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Escalation Decision Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Generation Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Response Generation Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Generation Agent": {
+      "main": [
+        [
+          {
+            "node": "Quality Control Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Response Groq Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Response Generation Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mistral Cloud Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Knowledge Retrieval Tool",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Email Classifier Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge Base Checker Agent": {
+      "main": [
+        [
+          {
+            "node": "need knowledge base",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Email Classifier Agent": {
+      "main": [
+        [
+          {
+            "node": "Knowledge Base Checker Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Quality Control Agent": {
+      "main": [
+        [
+          {
+            "node": "Humanize email body",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Escalate?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Response Generation Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {
+    "When Executed by Another Workflow": [
+      {
+        "email_address": "blackalex00268@gmail.com",
+        "email_body": "Hi Neswave Support Team, We’ve been using your AI chatbot solution on our website for the past three months, but we’re experiencing an issue where the bot isn’t responding to certain customer queries about order tracking. This is causing frustration for our users. Can you investigate this and let us know how to resolve it? We’re also wondering if this is related to the recent update you rolled out. Please advise ASAP.\n\nThanks,\nLaura Bennett",
+        "thread_id": "1993637e9ca854e1",
+        "hubspot_id": "132960945553",
+        "subject": "Issue with Chatbot Integration on Our Website",
+        "greeter": "Good morning, Abdullah,",
+        "crm_note": " Note#1:\n2025-09-10T01:20:15.678Z\nbye bye\n\nNote#2:\n2025-09-10T01:20:05.748Z\nhlw\n\nNote#3:\n2025-09-10T01:14:58.035Z\nprintf(\"\");",
+        "thread_context": " no previous summary of email thread",
+        "customer_name": "abdullah"
+      }
+    ]
+  },
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6baf55fe0ef77c33d6fa749473787d2579a5b07f1458cc63604927053b912082"
+  }
+}
